@@ -1,0 +1,126 @@
+{
+    "role": {
+        "type": "server",
+        "name": "lanc-opi5",
+        "bind": {
+            "ip": "0.0.0.0",
+            "port": 59394,
+            "heartbeat_msecs": 1500,
+            "poll_timeout_msecs": 1500
+        },
+        "multicast": {
+            "ip": "239.0.0.0",
+            "port": 28384,
+            "max_payload_size": 1400,
+            "send_policy": {
+                "interface": "eth0",
+                "needs_local_copy": false,
+                "packets_per_batch": 5,
+                "batch_gap_usecs": 100,
+                "sendbuf_adjust_command": "sudo sysctl -w net.core.wmem_max=12582912",
+                "sendbuf_size": 8388608
+            }
+        }
+    },
+
+    "logger": {
+        "level": "info"
+    },
+
+    "save": {
+        "enabled": true,
+        "dir": "/opt/lan_camera/save",
+        "ramfs": {
+            "enabled": true,
+            "path": "/tmp"
+        }, 
+        "delays_flushing": false,
+        "tail_waiting_secs": 10,
+        "backup_history_days": 90,
+        "sync": {
+            "ip": "0.0.0.0",
+            "port": 0,
+            "user": "lanc",
+            "password": "file:///usr/local/etc/rsync.pswd",
+            "daemon_command": "TZ='Asia/Shanghai' sudo rsync --daemon --config=/opt/lan_camera/etc/rsyncd.conf"
+        }
+    },
+
+    "video": {
+        "play_command": "mpv --hwdec=rkmpp --vo=xv",
+        "lib_install_command": "sudo apt install zlib1g-dev liblz4-dev",
+        "compression": {
+            "jpeg": {
+                "enabled": true,
+                "level": 75,
+                "range": [ 100, 0 ]
+            },
+            "png": {
+                "enabled": false,
+                "level": 6,
+                "range": [ 1, 9 ]
+            },
+            "webp": {
+                "enabled": false,
+                "level": 75,
+                "range": [ 100, 0 ]
+            },
+            "lz4": {
+                "enabled": false,
+                "level": 1,
+                "range": [ 20, 1 ]
+            },
+            "zlib": {
+                "enabled": false,
+                "level": 6,
+                "range": [ 1, 9 ]
+            }
+        }
+    },
+
+    "camera": {
+        "device": "/dev/video0",
+        "fallback_fps": 15.0,
+        "capture_format": "auto",
+        "result_format": "BGR",
+        "image_sizes": [
+            [ 640, 480 ],
+            [ 720, 540 ],
+            [ 800, 600 ],
+            [ 960, 720 ],
+            [ 1280, 720 ],
+            [ 1280, 960 ]
+        ],
+        "which_size": 1,
+        "buffer_count": 4,
+        "io_mode_priorities": [
+            "dmabuf",
+            "mmap",
+            "userptr"
+        ]
+    },
+
+    "inference": {
+        "model": {
+            "width": 640,
+            "height": 640,
+            "path": "/opt/lan_camera/etc/inference/rk3588/yolov5s-640-640.rknn"
+        },
+        "label": {
+            "file": "/opt/lan_camera/etc/inference/coco_80_labels_list.txt",
+            "thresholds": {
+                "person": 0.8,
+                "cat": 0.8,
+                "dog": 0.8
+            }
+        },
+        "spacing_frame_count": 4
+    },
+
+    "test": {
+        "capture_duration_secs": 60,
+        "decodes_with_rga": true,
+        "resizes_with_rga": true
+    }
+}
+

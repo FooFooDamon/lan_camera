@@ -1,0 +1,61 @@
+{
+    "role": {
+        "type": "client",
+        "name": "lanc-desktop",
+        "connect": {
+            "ip": "192.168.11.11",
+            "port": 59394,
+            "heartbeat_msecs": 500,
+            "poll_timeout_msecs": 10000
+        }
+    },
+
+    "logger": {
+        "level": "info"
+    },
+
+    "save": {
+        "enabled": true,
+        "dir": "/opt/lan_camera/save",
+        "ramfs": {
+            "enabled": true,
+            "path": "/tmp"
+        }, 
+        "tail_waiting_secs": 10,
+        "backup_history_days": 90,
+        "sync": {
+            "ip": "192.168.11.11",
+            "port": 0,
+            "user": "lanc",
+            "password": "file:///usr/local/etc/rsync.pswd",
+            "common_options": "--archive --verbose --compress --recursive --delete --executability --links --hard-links -P",
+            "ssh_example": "rsync --rsh='sshpass -p ${password} ssh -l ${user}' ${common-options} ${user}@${ip}:${dir}/server ${dir}/",
+            "auth_rsync_example": "rsync --password-file=/usr/local/etc/rsync.pswd ${common-options} rsync://${user}@${ip}/lan_camera ${dir}/server",
+            "anon_rsync_example": "rsync ${common-options} rsync://${ip}/lan_camera ${dir}/server"
+        }
+    },
+
+    "player": {
+        "image_sizes": [
+            [ 640, 480 ],
+            [ 720, 540 ],
+            [ 800, 600 ],
+            [ 960, 720 ],
+            [ 1280, 720 ],
+            [ 1280, 960 ]
+        ],
+        "which_size": 1
+    },
+
+    "audio": {
+        "record_start": "/opt/lan_camera/etc/audio/record-start.wav",
+        "record_end": "/opt/lan_camera/etc/audio/record-end.wav",
+        "volume": 0.8
+    },
+
+    "opengl": {
+        "version": "320 es",
+        "profile": "core"
+    }
+}
+
