@@ -68,6 +68,9 @@ moc_*.cpp
 modules.order
 obj/
 QtMakefile
+rsync.exclude*
+rsync.ign
+rsync.ignore*
 tags
 ui_*.h
 
@@ -88,6 +91,7 @@ communication_protocol.h
 devclass_supplements.c
 devclass_supplements.h
 evol_kernel.h
+formatted_logging_adapter.h
 ini_file.c
 ini_file.h
 ini_map.hpp
@@ -106,6 +110,7 @@ string_supplements.c
 string_supplements.h
 thread_queue_forward_declaration.hpp
 thread_queue.hpp
+todo.h
 __ver__.h
 watchdog.c
 watchdog.h
@@ -130,5 +135,7 @@ _tmp_
 __pycache__
 
 
+custom.mk
+lanc_*
 save
 
