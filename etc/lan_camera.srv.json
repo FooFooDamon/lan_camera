@@ -118,9 +118,7 @@
     },
 
     "test": {
-        "capture_duration_secs": 60,
-        "decodes_with_rga": true,
-        "resizes_with_rga": true
+        "capture_duration_secs": 60
     }
 }
 
