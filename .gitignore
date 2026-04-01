@@ -39,6 +39,8 @@
 *.pdb
 *.plist
 *.priv.*
+*.priv
+*.private
 *.pyc
 *.so
 *.so.*
@@ -67,6 +69,8 @@ moc_*.h
 moc_*.cpp
 modules.order
 obj/
+private
+private[-_]*
 QtMakefile
 rsync.exclude*
 rsync.ign
