@@ -1,7 +1,14 @@
 {
+    "logger": {
+        "level": "info"
+    },
+
     "role": {
         "type": "server",
-        "name": "lanc-opi5",
+        "name": "lanc-opi5"
+    },
+
+    "network": {
         "bind": {
             "ip": "0.0.0.0",
             "port": 59394,
@@ -23,10 +30,6 @@
         }
     },
 
-    "logger": {
-        "level": "info"
-    },
-
     "save": {
         "enabled": true,
         "dir": "/opt/lan_camera/save",
@@ -35,13 +38,13 @@
             "path": "/tmp"
         }, 
         "delays_flushing": false,
-        "tail_waiting_secs": 10,
+        "min_duration_secs": 10,
         "backup_history_days": 90,
         "sync": {
             "ip": "0.0.0.0",
             "port": 0,
             "user": "lanc",
-            "password": "file:///usr/local/etc/rsync.pswd",
+            "password": "file:///etc/rsyncd.secrets",
             "daemon_command": "TZ='Asia/Shanghai' sudo rsync --daemon --config=/opt/lan_camera/etc/rsyncd.conf"
         }
     },
@@ -52,28 +55,28 @@
         "compression": {
             "jpeg": {
                 "enabled": true,
-                "level": 75,
+                "level": 30,
                 "range": [ 100, 0 ]
             },
             "png": {
                 "enabled": false,
                 "level": 6,
-                "range": [ 1, 9 ]
+                "range": [ 0, 9 ]
             },
             "webp": {
                 "enabled": false,
-                "level": 75,
+                "level": 30,
                 "range": [ 100, 0 ]
             },
             "lz4": {
                 "enabled": false,
-                "level": 1,
-                "range": [ 20, 1 ]
+                "level": 10,
+                "range": [ 1, 10 ]
             },
             "zlib": {
                 "enabled": false,
                 "level": 6,
-                "range": [ 1, 9 ]
+                "range": [ 0, 9 ]
             }
         }
     },
@@ -93,7 +96,7 @@
         ],
         "which_size": 1,
         "buffer_count": 4,
-        "io_mode_priorities": [
+        "io_modes": [
             "dmabuf",
             "mmap",
             "userptr"
