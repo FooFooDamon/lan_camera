@@ -146,7 +146,7 @@ typedef struct conf_file
     std::shared_ptr<struct priv_config> priv;
 } conf_file_t;
 
-int load_config_file(const char *path, conf_file_t &result);
+int load_config_file(const char *path, conf_file_t &result, bool debug = true);
 
 void unload_config_file(conf_file_t &result);
 
@@ -159,5 +159,8 @@ void unload_config_file(conf_file_t &result);
  *
  * >>> 2026-04-04, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-05, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add debug parameter to load_config_file().
  */
 

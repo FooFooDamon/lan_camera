@@ -20,7 +20,7 @@
 static int s_log_level = LOG_LEVEL_INFO;
 
 #define PRINT_INFO(_fmt_, ...)              do { \
-    if (LOG_LEVEL_INFO <= s_log_level) \
+    if (LOG_LEVEL_INFO <= s_log_level && debug) \
         printf(_fmt_ "\n", ##__VA_ARGS__); \
 } while (0)
 
@@ -47,7 +47,7 @@ static int s_log_level = LOG_LEVEL_INFO;
 #define ETC_ROOT_DIR                        LANC_ROOT_DIR "/etc"
 #endif
 
-static int parse_logger_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_logger_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     const Json::Value &part_obj = root[part];
     const char *obj_name;
@@ -74,7 +74,7 @@ static int parse_logger_config(const Json::Value &root, const char *part, conf_f
     return 0;
 }
 
-static int parse_role_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_role_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     const Json::Value &part_obj = root[part];
     const std::string &type_str = part_obj.get("type", "unknown").asString();
@@ -107,7 +107,7 @@ static int parse_role_config(const Json::Value &root, const char *part, conf_fil
     return 0;
 }
 
-static int parse_network_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_network_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     const Json::Value &part_obj = root[part];
     bool is_server = (ROLE_SERVER == result.role.type);
@@ -224,7 +224,7 @@ lbl_print_role_info:
     return 0;
 }
 
-static int parse_save_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_save_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     const Json::Value &part_obj = root[part];
     const Json::Value &obj_ramfs = part_obj["ramfs"];
@@ -295,7 +295,7 @@ static int parse_save_config(const Json::Value &root, const char *part, conf_fil
     return 0;
 }
 
-static int parse_video_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_video_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER != result.role.type)
         return 0;
@@ -369,7 +369,7 @@ static int parse_video_config(const Json::Value &root, const char *part, conf_fi
 
     PRINT_INFO("/%s:", part);
     PRINT_INFO("\tplay_command: %s", result.video.play_command.c_str());
-    PRINT_INFO("\t%s:", "compression");
+    PRINT_INFO("\t%s:", "compression (selected)");
     PRINT_INFO("\t\talgorithm: %s", config_compression.first.c_str());
     PRINT_INFO("\t\tlevel: %d", config_compression.second);
     PRINT_INFO("\t\trange: [%d, %d] // [<for-biggest-size>, <for-smallest-size>]",
@@ -378,7 +378,7 @@ static int parse_video_config(const Json::Value &root, const char *part, conf_fi
     return 0;
 }
 
-static int parse_audio_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_audio_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER == result.role.type)
         return 0;
@@ -413,7 +413,7 @@ static int parse_audio_config(const Json::Value &root, const char *part, conf_fi
     return 0;
 }
 
-static int parse_camera_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_camera_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER != result.role.type)
         return 0;
@@ -507,7 +507,7 @@ static int parse_camera_config(const Json::Value &root, const char *part, conf_f
     return 0;
 }
 
-static int parse_player_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_player_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER == result.role.type)
         return 0;
@@ -573,7 +573,7 @@ static int parse_player_config(const Json::Value &root, const char *part, conf_f
     return 0;
 }
 
-static int parse_inference_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_inference_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER != result.role.type)
         return 0;
@@ -640,7 +640,7 @@ static int parse_inference_config(const Json::Value &root, const char *part, con
     return 0;
 }
 
-static int parse_test_config(const Json::Value &root, const char *part, conf_file_t &result)
+static int parse_test_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER != result.role.type)
         return 0;
@@ -670,12 +670,12 @@ static int parse_test_config(const Json::Value &root, const char *part, conf_fil
 }
 
 __attribute__((weak))
-int parse_private_config(const Json::Value &root, const char *part, conf_file_t &result)
+int parse_private_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     return 0; // do nothing by default
 }
 
-int load_config_file(const char *path, conf_file_t &result)
+int load_config_file(const char *path, conf_file_t &result, bool debug/* = true */)
 {
     std::ifstream stream(path);
 
@@ -703,7 +703,7 @@ int load_config_file(const char *path, conf_file_t &result)
         return -EILSEQ;
     }
 
-    typedef int (*parse_config_func_t)(const Json::Value &, const char *, conf_file_t &);
+    typedef int (*parse_config_func_t)(const Json::Value &, const char *, conf_file_t &, bool);
     struct
     {
         const char *name;
@@ -752,7 +752,7 @@ int load_config_file(const char *path, conf_file_t &result)
             break;
         }
 
-        if ((ret = part_parser.func(root, part_name, result)) < 0)
+        if ((ret = part_parser.func(root, part_name, result, debug)) < 0)
             break;
     }
 
@@ -771,5 +771,8 @@ void unload_config_file(conf_file_t &result)
  *
  * >>> 2026-04-04, Man Hung-Coeng <udc577@126.com>:
  *  01. Initial commit.
+ *
+ * >>> 2026-04-05, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add debug parameter to load_config_file() and its callee functions.
  */
 
