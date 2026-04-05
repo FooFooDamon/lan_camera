@@ -3,6 +3,7 @@
 .cache/
 .fuse_hidden*
 .qmake.stash
+.revision
 .tmp_versions/
 .vs
 .vscode
