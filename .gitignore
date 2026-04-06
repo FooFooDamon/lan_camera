@@ -143,4 +143,12 @@ __pycache__
 custom.mk
 lanc_*
 save
+src/client/biz_protocols.cpp
+src/client/biz_save.cpp
+src/client/cmdline_args.cpp
+src/client/config_file.cpp
+src/server/biz_protocols.cpp
+src/server/biz_save.cpp
+src/server/cmdline_args.cpp
+src/server/config_file.cpp
 
