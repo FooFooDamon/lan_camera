@@ -759,9 +759,15 @@ int load_config_file(const char *path, conf_file_t &result, bool debug/* = true 
     return ret;
 }
 
-void unload_config_file(conf_file_t &result)
+__attribute__((weak))
+void release_private_config(conf_file_t &config)
 {
     // empty
+}
+
+void unload_config_file(conf_file_t &config)
+{
+    release_private_config(config);
 }
 
 /*
@@ -774,5 +780,8 @@ void unload_config_file(conf_file_t &result)
  *
  * >>> 2026-04-05, Man Hung-Coeng <udc577@126.com>:
  *  01. Add debug parameter to load_config_file() and its callee functions.
+ *
+ * >>> 2026-04-07, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add release_private_config().
  */
 
