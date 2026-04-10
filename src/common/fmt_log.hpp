@@ -39,10 +39,11 @@ extern thread_local char __thread_name__[16];
 #define THREAD_NAME()                           __thread_name__
 
 #undef FMT_LOG
-#define FMT_LOG(_filter_, _tag_, _fmt_, ...)    FMT_LOG_SIMPLE(_filter_, _tag_, "(T:%s) " _fmt_, THREAD_NAME(), ##__VA_ARGS__)
+#define FMT_LOG(_filter_, _tag_, _fmt_, ...)    FMT_LOG_SIMPLE(&g_log_filter, _tag_, "(T:%s) " _fmt_, \
+                                                    THREAD_NAME(), ##__VA_ARGS__)
 
 #undef FMT_LOG_V
-#define FMT_LOG_V(_filter_, _tag_, _fmt_, ...)  FMT_LOG_SIMPLE(_filter_, _tag_, "(T:%s) " __FILE__ ":%d %s(): " _fmt_, \
+#define FMT_LOG_V(_filter_, _tag_, _fmt_, ...)  FMT_LOG_SIMPLE(&g_log_filter, _tag_, "(T:%s) " __FILE__ ":%d %s(): " _fmt_, \
                                                     THREAD_NAME(), __LINE__, __func__, ##__VA_ARGS__)
 
 // CLS means class.
@@ -55,11 +56,11 @@ extern thread_local char __thread_name__[16];
                                                     "(T:%s) " __FILE__ ":%d " #_ns_ "%s(): " _fmt_, \
                                                     THREAD_NAME(), __LINE__, __func__, ##__VA_ARGS__)
 
-#define LOG_DEBUG(_fmt_, ...)                   FMT_LOG_V(&g_log_filter, D, _fmt_, ##__VA_ARGS__)
-#define LOG_INFO(_fmt_, ...)                    FMT_LOG_V(&g_log_filter, I, _fmt_, ##__VA_ARGS__)
-#define LOG_NOTICE(_fmt_, ...)                  FMT_LOG_V(&g_log_filter, N, _fmt_, ##__VA_ARGS__)
-#define LOG_WARNING(_fmt_, ...)                 FMT_LOG_V(&g_log_filter, W, _fmt_, ##__VA_ARGS__)
-#define LOG_ERROR(_fmt_, ...)                   FMT_LOG_V(&g_log_filter, E, _fmt_, ##__VA_ARGS__)
+#define LOG_DEBUG(_fmt_, ...)                   FMT_LOG_V(_, D, _fmt_, ##__VA_ARGS__)
+#define LOG_INFO(_fmt_, ...)                    FMT_LOG_V(_, I, _fmt_, ##__VA_ARGS__)
+#define LOG_NOTICE(_fmt_, ...)                  FMT_LOG_V(_, N, _fmt_, ##__VA_ARGS__)
+#define LOG_WARNING(_fmt_, ...)                 FMT_LOG_V(_, W, _fmt_, ##__VA_ARGS__)
+#define LOG_ERROR(_fmt_, ...)                   FMT_LOG_V(_, E, _fmt_, ##__VA_ARGS__)
 
 #define LOG_DEBUG_C(_fmt_, ...)                 CLS_VLOG(D, _fmt_, ##__VA_ARGS__)
 #define LOG_INFO_C(_fmt_, ...)                  CLS_VLOG(I, _fmt_, ##__VA_ARGS__)
@@ -82,5 +83,9 @@ extern thread_local char __thread_name__[16];
  *
  * >>> 2026-03-31, Man Hung-Coeng <udc577@126.com>:
  *  01. Initial commit.
+ *
+ * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
+ *  01. Always use g_log_filter regardless of the actual value of _filter_
+ *      in FMT_LOG*() re-definitions.
  */
 
