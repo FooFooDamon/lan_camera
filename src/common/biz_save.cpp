@@ -51,6 +51,7 @@ static inline bool make_multilevel_directory(const char *dir, size_t len)
 {
     char *path = const_cast<char *>(dir);
 
+    path[len] = '/';
     for (size_t i = 1; i <= len; ++i)
     {
         if ('/' != path[i])
@@ -68,6 +69,7 @@ static inline bool make_multilevel_directory(const char *dir, size_t len)
 
         path[i] = '/';
     }
+    path[len] = '\0';
 
     return true;
 }
@@ -99,7 +101,7 @@ static inline void rename_video_file(uint32_t total_frame_count, float fps, cons
 //#define DISPLAY_RESIZED_IMAGES                1
 
 __attribute__((weak))
-void biz_video_save(biz_context_t *ctx, int index)
+void biz_save_video(biz_context_t *ctx, int index)
 {
     char thread_name[16] = { 0 };
     const int NEIGHBOR_INDEX = (index + 1) % 2;
@@ -111,7 +113,7 @@ void biz_video_save(biz_context_t *ctx, int index)
     std::string root_dir = (/* FIXME: enabled later: conf.save.ramfs.enabled ? conf.save.ramfs.path : */conf.save.dir)
         + ((ROLE_SERVER == conf.role.type) ? "/server" : (conf.save.enabled ? "/client" : "/server"));
     std::string path;
-    char date_dir[16] = { 0 }; // format: /%04d/%02d/%02d/%02d
+    char date_dir[32] = { 0 }; // format: /%04d/%02d/%02d/%02d
     char video_file[16] = { 0 }; // format: /%02d%02d.mp4
     cv::VideoWriter writer;
     const char *suffix = ".mp4";
@@ -169,7 +171,7 @@ void biz_video_save(biz_context_t *ctx, int index)
             continue;
 
         last_save_flag = cur_save_flag;
-        buf_idx = ctx->buf_index;
+        buf_idx = ctx->buf_index_of_latest_frame;
 
         if (is_test)
             clock_gettime(CLOCK_MONOTONIC, &start_time);
@@ -183,7 +185,7 @@ void biz_video_save(biz_context_t *ctx, int index)
             ++total_frame_count;
             rename_video_file(total_frame_count, fps, size, suffix, path);
             total_frame_count = 0;
-            LOG_NOTICE("Finished making and renaming/linking video[%s] with %u frames dropped",
+            LOG_INFO("Finished making and renaming/linking video[%s] with %u frames dropped",
                 path.c_str(), ctx->skipped_saving_count - total_dropped_count);
             total_dropped_count = ctx->skipped_saving_count;
         }
@@ -217,8 +219,7 @@ void biz_video_save(biz_context_t *ctx, int index)
 
                     break;
                 }
-                LOG_NOTICE("Making video: Path = %s, FourCC = %s, FPS = %.1f",
-                    path.c_str(), fourcc_str.c_str(), fps);
+                LOG_DEBUG("Making video: Path = %s, FourCC = %s, FPS = %.1f", path.c_str(), fourcc_str.c_str(), fps);
             } // if (!writer.isOpened())
 
             add_timestamp(ctx->timestamps[buf_idx], matrixes[buf_idx]);
@@ -237,7 +238,7 @@ void biz_video_save(biz_context_t *ctx, int index)
     {
         writer.release();
         rename_video_file(total_frame_count, fps, size, suffix, path);
-        LOG_NOTICE("Finished making and renaming/linking video[%s] with %u frames dropped",
+        LOG_INFO("Finished making and renaming/linking video[%s] with %u frames dropped",
             path.c_str(), ctx->skipped_saving_count - total_dropped_count);
     }
 
@@ -251,6 +252,18 @@ void biz_video_save(biz_context_t *ctx, int index)
     }
 }
 
+// TODO:
+//__attribute__((weak))
+//void biz_save_audio(biz_context_t *ctx, int index)
+//{
+//}
+
+// TODO:
+//__attribute__((weak))
+//void biz_flush(biz_context_t *ctx, int index)
+//{
+//}
+
 /*
  * ================
  *   CHANGE LOG
@@ -258,5 +271,12 @@ void biz_video_save(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-07, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
+ *  01. Fix the bug of make_multilevel_directory()
+ *      not creating the final level directory.
+ *  02. Rename biz_video_save() to biz_save_video(),
+ *      change level of logs of starting and finishing saving a video file,
+ *      and fix up date_dir compilation warning and buf_idx updating error.
  */
 
