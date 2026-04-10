@@ -13,14 +13,7 @@
 #include <memory>
 #include <vector>
 #include <atomic>
-
-namespace std
-{
-
-class mutex;
-class condition_variable;
-
-}
+#include <condition_variable>
 
 namespace cv
 {
@@ -45,7 +38,7 @@ typedef struct biz_context
     std::shared_ptr<QLANCamera> widget;
     // ----
     std::vector<struct timespec> timestamps;
-    uint32_t raw_buf_size;
+    volatile uint32_t raw_buf_size;
     std::vector<unsigned char *> raw_buffers;
     std::vector<std::vector<unsigned char>> rgb_buffers;
     std::vector<std::vector<unsigned char>> resized_buffers;
@@ -60,15 +53,14 @@ typedef struct biz_context
     std::shared_ptr<std::condition_variable> flush_notifiers[2];
     struct
     {
-        int64_t timestamp;
-        int32_t duration;
-        int32_t should_delete:1;
-        int32_t unused:31;
-    } unflushed_files[2]; // previous file, current file
+        volatile int64_t timestamp;
+        volatile int32_t duration;
+        volatile int32_t should_delete:1;
+        volatile int32_t unused:31;
+    } unflushed_files[2]; // [0]: current file, [1]: previous file
     std::shared_ptr<std::mutex> unflushed_info_lock;
     // ----
-    std::atomic<int64_t> startup_time_secs;
-    std::atomic_int_fast64_t time_of_1st_positive_inference;
+    volatile int64_t startup_time_secs;
     std::atomic_uint_fast64_t frame_seq;
     std::atomic<uint64_t> total_saving_count;
     std::atomic<uint64_t> total_sending_count;
@@ -77,8 +69,8 @@ typedef struct biz_context
     std::atomic<uint32_t> skipped_sending_count;
     std::atomic<uint32_t> skipped_inference_count;
     // ----
-    std::atomic_uint_fast8_t buf_index;
-    std::atomic_uint_fast8_t infer_index;
+    std::atomic_uint_fast8_t buf_index_of_latest_frame;
+    std::atomic_int_fast8_t buf_index_to_infer;
     std::atomic_uint_fast8_t saver_index; // [0, (<count-of-save-threads> - 1)]
     std::atomic_uint_fast8_t unflushed_count; // should be <= 1
     std::atomic_uint_fast8_t unsaved_count;
@@ -94,7 +86,7 @@ typedef struct biz_context
     std::shared_ptr<struct private_context> priv;
 } biz_context_t;
 
-#define BIZ_FUN_ARG_LIST                biz_context_t &ctx, int index
+#define BIZ_FUN_ARG_LIST                biz_context_t &ctx
 
 #define DECLARE_BIZ_FUN(name)           int name(BIZ_FUN_ARG_LIST)
 #define BIZ_FUN(name)                   name
@@ -128,5 +120,16 @@ inline struct timespec subtract_timespec(const struct timespec &l, const struct 
  *
  * >>> 2026-04-06, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
+ *  01. Include the header file of condition_variable instead of
+ *      using forward declaration.
+ *  02. Update several fields of biz_context_t:
+ *      (1) Rename buf_index to buf_index_of_latest_frame,
+ *          infer_index to buf_index_to_infer;
+ *      (2) Delete the unused time_of_1st_positive_inference;
+ *      (3) Add volatile modifier to raw_buf_size, startup_time_secs
+ *          and fields within struct type of unflushed_files.
+ *  03. Remove the index parameter from macro BIZ_FUN_ARG_LIST.
  */
 
