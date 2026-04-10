@@ -612,6 +612,8 @@ static int parse_inference_config(const Json::Value &root, const char *part, con
         }
 
         obj_name = nullptr;
+        item_key = "enabled";
+        result.inference.enabled = part_obj.get(item_key, false).asBool();
         item_key = "spacing_frame_count";
         result.inference.spacing_frame_count = part_obj.get(item_key, 14).asUInt();
     }
@@ -624,6 +626,7 @@ static int parse_inference_config(const Json::Value &root, const char *part, con
     }
 
     PRINT_INFO("/%s:", part);
+    PRINT_INFO("\tenabled: %s", result.inference.enabled ? "true" : "false");
     PRINT_INFO("\t%s:", "model");
     PRINT_INFO("\t\twidth: %d", model_config.width);
     PRINT_INFO("\t\theight: %d", model_config.height);
@@ -783,5 +786,8 @@ void unload_config_file(conf_file_t &config)
  *
  * >>> 2026-04-07, Man Hung-Coeng <udc577@126.com>:
  *  01. Add release_private_config().
+ *
+ * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
+ *  01. Parse the new added field "enabled" in parse_inference_config().
  */
 

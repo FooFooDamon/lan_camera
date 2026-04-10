@@ -104,6 +104,7 @@
     },
 
     "inference": {
+        "enabled": false,
         "model": {
             "width": 640,
             "height": 640,

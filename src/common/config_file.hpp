@@ -126,6 +126,7 @@ typedef struct conf_file
     } player;
     struct
     {
+        bool enabled;
         uint16_t spacing_frame_count;
         struct
         {
@@ -162,5 +163,8 @@ void unload_config_file(conf_file_t &result);
  *
  * >>> 2026-04-05, Man Hung-Coeng <udc577@126.com>:
  *  01. Add debug parameter to load_config_file().
+ *
+ * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add a new field "enabled" to conf_file_t::inference.
  */
 
