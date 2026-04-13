@@ -30,8 +30,12 @@
 #define USAGE_FORMAT                    "[OPTION...] [FILE...]"
 #endif
 
+#ifndef BIZ_TYPE_CANDIDATES
 #define BIZ_TYPE_CANDIDATES             "server,client,test,player"
+#endif
+#ifndef BIZ_TYPE_DEFAULT
 #define BIZ_TYPE_DEFAULT                "server"
+#endif
 
 #ifdef HAS_CONFIG_FILE
 #ifndef DEFAULT_CONF_FILE
@@ -354,4 +358,8 @@ void assert_parsed_args(const cmd_args_t &args)
  *
  * >>> 2026-04-05, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for customizing BIZ_TYPE_CANDIDATES and BIZ_TYPE_DEFAULT
+ *      elsewhere.
  */
