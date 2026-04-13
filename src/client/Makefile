@@ -67,6 +67,8 @@ OS_MACRO ?= -D__linux__
 PREDEFS_FOR_CPPCHECK ?= $(if $(wildcard moc_predefs.h), --include=moc_predefs.h, \
     ${OS_MACRO} $$(g++ -dM -E - < /dev/null | grep ENDIAN | awk '{ printf("-D%s=%s\n", $$2, $$3) }'))
 
+cmdline_args.o: DEFINES += -DBIZ_TYPE_CANDIDATES='"client,player"' -DBIZ_TYPE_DEFAULT='"client"' \
+            -DBRIEF_INTRO='"Camera Client running on Local Area Network"'
 signal_handling.o: DEFINES += -U__STRICT_ANSI__
 
 .PHONY: .ALWAYS_MAKE ext_clean check debug_patch ui_fix
