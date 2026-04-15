@@ -25,7 +25,7 @@ else
 endif
 
 override undefine __OTHER_TARGETS
-__OTHER_TARGETS := clean distclean dist install uninstall check test
+__OTHER_TARGETS := prepare clean distclean dist install uninstall check test
 
 .PHONY: all help list-modules ${__MODULES} ${__OTHER_TARGETS}
 .PHONY: $(foreach i, ${__OTHER_TARGETS}, $(foreach j, ${__MODULES}, ${i}-${j}))
@@ -63,6 +63,7 @@ help:
 	@echo "                      See also: list-modules"
 	@echo "  list-modules      - Show available module names."
 	@echo "--------"
+	@echo "  prepare           - Make some preparations first."
 	@echo "  clean             - Remove [MOST] generated files and directories."
 	@echo "  distclean         - Remove [ALL] generated files and directories."
 	@echo "  dist              - Make a distribution package for product release."
