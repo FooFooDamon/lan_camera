@@ -85,7 +85,8 @@ CXX_INCLUDES += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
 OTHER_CFLAGS +=
 OTHER_CXXFLAGS +=
 C_LDFLAGS +=
-CXX_LDFLAGS += $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
+CXX_LDFLAGS += $(if $(wildcard ../server.priv), -L../server.priv -llancs_cust,) \
+                $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
 
 ${COMMON_C_SRCS} ${COMMON_CXX_SRCS}: %: ${COMMON_DIR}/%
 	$(if ${Q},@printf 'LINK\t$<\n')
@@ -95,11 +96,9 @@ camera_v4l2.o: camera_v4l2.c
 	$(if ${Q},@printf 'CXX\t$<\n')
 	${Q}${CXX_COMPILE}
 
--include custom.mk
-
 endif
 
-export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR} ../server.priv ../client.priv)
+export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR} ../server.priv)
 
 dependencies:
 	@for i in ${DEPENDENCY_DIRS}; \

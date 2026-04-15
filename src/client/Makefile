@@ -61,7 +61,8 @@ CFLAGS += -Wno-unused-parameter
 CXXFLAGS += -Wno-unused-parameter
 INCPATH += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
 LFLAGS +=
-LIBS += $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
+LIBS += $(if $(wildcard ../client.priv), -L../client.priv -llancc_cust,) \
+        $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
 NO_CPPCHECK = true
 OS_MACRO ?= -D__linux__
 PREDEFS_FOR_CPPCHECK ?= $(if $(wildcard moc_predefs.h), --include=moc_predefs.h, \
@@ -113,8 +114,6 @@ debug_patch:
 
 ui_fix: ui_${TARGET}.h
 	sed -i 's/\(.*\<QPalette::PlaceholderText\>.*\)/\/\/\1/' $<
-
--include custom.mk
 
 endif
 
