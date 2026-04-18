@@ -51,6 +51,10 @@ all: dependencies
 include __ver__.mk
 include QtMakefile
 
+override EXE_DIR := ${HOME}/bin
+override LIB_DIR := ${HOME}/lib
+override CORE_LIB := liblancc_core.so
+override CUST_LIB := $(wildcard ${LIB_DIR}/liblancc_cust.so)
 export __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
 DEFINES += -D__VER__='"${__VER__}"' -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
             -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
@@ -61,18 +65,38 @@ CFLAGS += -Wno-unused-parameter
 CXXFLAGS += -Wno-unused-parameter
 INCPATH += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
 LFLAGS +=
-LIBS += $(if $(wildcard ../client.priv), -L../client.priv -llancc_cust,) \
-        $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
+LIBS += $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
 NO_CPPCHECK = true
 OS_MACRO ?= -D__linux__
 PREDEFS_FOR_CPPCHECK ?= $(if $(wildcard moc_predefs.h), --include=moc_predefs.h, \
     ${OS_MACRO} $$(g++ -dM -E - < /dev/null | grep ENDIAN | awk '{ printf("-D%s=%s\n", $$2, $$3) }'))
 
+ifneq (${CUST_LIB},) # Found customization.
+
+CORE_OBJS := $(filter-out main.o, ${OBJECTS})
+OBJECTS = main.o ${CORE_LIB}
+
+# WEIRD BUG: This dependency has to be declared explicitly even though the library is already in OBJECTS!
+${TARGET}: ${CORE_LIB}
+
+#
+# All weak symbols must be packed into a shared library
+# so that they can be overridden by the ones in ${CUST_LIB}.
+#
+# Also be aware that ${CUST_LIB} should be preloaded
+# by setting LD_PRELOAD environment variable
+# before starting ${TARGET}.
+#
+${CORE_LIB}: ${CORE_OBJS}
+	${CXX} -shared -o $@ $^
+
+endif
+
 cmdline_args.o: DEFINES += -DBIZ_TYPE_CANDIDATES='"client,player"' -DBIZ_TYPE_DEFAULT='"client"' \
-            -DBRIEF_INTRO='"Camera Client running on Local Area Network"'
+                -DBRIEF_INTRO='"Camera Client running on Local Area Network"'
 signal_handling.o: DEFINES += -U__STRICT_ANSI__
 
-.PHONY: .ALWAYS_MAKE ext_clean check debug_patch ui_fix
+.PHONY: .ALWAYS_MAKE install uninstall ext_clean check debug_patch ui_fix
 
 versions.h: .revision
 	@touch $@
@@ -83,10 +107,24 @@ versions.h: .revision
 
 .ALWAYS_MAKE:
 
+override INSTALL := install -D --compare --backup=numbered
+
+install:
+	$(if $(wildcard ${CORE_LIB}),${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB})
+	$(if $(wildcard ${CORE_LIB}),ls ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null || :)
+	${INSTALL} ${TARGET} ${EXE_DIR}/${TARGET}
+	ls ${EXE_DIR}/${TARGET}.* 2> /dev/null || :
+
+uninstall:
+	rm -f ${EXE_DIR}/${TARGET}
+	ls ${EXE_DIR}/${TARGET}.* 2> /dev/null || :
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),rm ${LIB_DIR}/${CORE_LIB})
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),ls ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null || :)
+
 clean: ext_clean
 
 ext_clean:
-	rm -f ${TARGET} *.d *.plist
+	rm -f ${TARGET} *.d *.plist $(if ${CUST_LIB}, ${CORE_LIB} *.o)
 
 check:
 	-${NO_CPPCHECK} \
@@ -117,7 +155,7 @@ ui_fix: ui_${TARGET}.h
 
 endif
 
-export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR} ../client.priv)
+export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR})
 
 dependencies:
 	@for i in ${DEPENDENCY_DIRS}; \
