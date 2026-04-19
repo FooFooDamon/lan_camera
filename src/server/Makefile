@@ -125,7 +125,8 @@ export __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | 
 C_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN
 CXX_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
                 -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
-                -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"'
+                -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"' \
+                $(if ${FMT_LOG_IMPL_H}, -DFMT_LOG_IMPL_H='"${FMT_LOG_IMPL_H}"')
 C_INCLUDES += -I${COMMON_DIR}
 CXX_INCLUDES += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
 OTHER_CFLAGS +=

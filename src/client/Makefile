@@ -59,8 +59,8 @@ export __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | 
 DEFINES += -D__VER__='"${__VER__}"' -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
             -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
             -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"' \
-            $(if $(strip $(filter-out n N no NO No 0, ${DISABLE_OPENGL_SHADERS})),-DDISABLE_OPENGL_SHADERS) \
-            $(if $(shell uname -m | grep "aarch64\|arm"), -D__ARM__)
+            $(if ${FMT_LOG_IMPL_H}, -DFMT_LOG_IMPL_H='"${FMT_LOG_IMPL_H}"') \
+            $(if $(strip $(filter-out n N no NO No 0, ${DISABLE_OPENGL_SHADERS})),-DDISABLE_OPENGL_SHADERS)
 CFLAGS += -Wno-unused-parameter
 CXXFLAGS += -Wno-unused-parameter
 INCPATH += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
