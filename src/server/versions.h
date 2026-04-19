@@ -5,7 +5,10 @@
  * All rights reserved.
  *
  * >>> V0.1.0|2026-04-10, Man Hung-Coeng <udc577@126.com>:
- *  01. Implement image real-time transmission and saving functionalities.
+ *  01. Implement image real-time transmission and video saving functionalities.
+ *
+ * >>> V0.1.1|2026-04-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Fix the customization bug.
  */
 
 #ifndef __VERSIONS_H__
@@ -24,7 +27,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       0
+#define PATCH_VER                       1
 #endif
 
 #ifndef __VER__
