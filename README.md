@@ -1,6 +1,5 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <base target="_blank" />
-<!-- <font size=5> -->
 
 # 局域网摄像头 | Local Area Network Camera
 
@@ -15,7 +14,7 @@ Compared with common solutions, it makes several differences in:
     > `Capabilities`: It only supports the most core operations including real-time image transmission,
     video saving (sound recording not implemented yet) and local video playing.
     The data wouldn't go through Internet, and wouldn't be uploaded to cloud,
-    which can lower down the risk of privacy leak.
+    which can reduce the risk of privacy leak.
 
 * `资源消耗`：实测非常节能，即使对孤寒鬼每月的电费单也无明显影响。
 按需录像（例如仅在有人经过时），则可极大节省硬碟或储存卡。
@@ -50,26 +49,19 @@ Compared with common solutions, it makes several differences in:
     > Create a new project which implements one or more function(s) marked with `__attribute__((weak))`
     and can produce a library named `liblancs_cust.so`.
 
-* 为该项目生成一个符号链接：
-    > Make a symbolic link for this project:
+* 复制这个定制库文件到特定目录：
+    > Copy the customized library to a specific directory:
     ````
-    $ ln -s /PATH/TO/CUSTOM/PROJECT $PWD/src/server.priv
+    $ cp /PATH/TO/CUSTOM/PROJECT/liblancs_cust.so ~/lib/
     ````
 
 * 重新编译服务端程序，详见后面的服务端部署指引。
     > Recompile server program, see the server deployment guideline in next chapter for more details.
 
-* 复制定制库文件到系统目录：
-    > Copy the customized library to system directory:
-    ````
-    $ sudo cp /PATH/TO/CUSTOM/PROJECT/liblancs_cust.so /usr/lib/
-    ````
-
 ### 客户端示例 | An Example of Client Side
 
-与服务器定制类似，只是库文件名要改成`liblancc_cust.so`，符号链接名要改成`client.priv`。
-> Similar to server customization except that the library name is `liblancc_cust.so`
-and the symbolic link name is `client.priv`.
+与服务器定制类似，只是库文件名要改成`liblancc_cust.so`。
+> Similar to server customization except that the library name is `liblancc_cust.so`.
 
 ## 部署 | Deployment
 
@@ -91,9 +83,11 @@ $ vim ~/etc/lan_camera.srv.json # Edit items in it accordingly, especially /netw
 $
 $ sudo sysctl -w net.core.wmem_max=$((1024 * 1024 * 12)) # after EACH system REBOOT
 $
-$ make prepare-server && make server && sudo cp src/server/lanc_server /usr/local/bin/
+$ make prepare-server server install-server # CAUTION: Delete or back up old version stuff yourself before this.
 $ source scripts/aliases.sh
-$ lanc_server
+$ lanc_server # Use "screen" command to interact with it. Its log file is /tmp/lanc_server.log.
+$
+$ crontab -e # APPEND a new line like: 0 0 * * * bash /opt/lan_camera/scripts/clean_expired_videos.sh $HOME/etc/lan_camera.srv.json
 ````
 
 ### 客户端 | Client Side
@@ -108,9 +102,9 @@ $
 $ jq -r '.save.enabled = false' --indent 4 etc/lan_camera.cli.json > ~/etc/lan_camera.cli.json
 $ vim ~/etc/lan_camera.cli.json # Edit items in it accordingly, especially /network/connect/ip and /save/sync/ip.
 $
-$ make prepare-client && make client && sudo cp src/client/lanc_client /usr/local/bin/
+$ make prepare-client client install-client # CAUTION: Delete or back up old version stuff yourself before this.
 $ source scripts/aliases.sh
-$ lanc_client
+$ lanc_client # Its log file is /tmp/lanc_client.log
 ````
 
 ## 简单演示 | Simple Demonstration
@@ -125,10 +119,7 @@ please take a look at [this video](https://b23.tv/MvECr8h).
 **NOTE**: The video is about another personal project developed ealier
 (and kept as private because of its strong binding to a specific platform),
 and that project was still a `monolithic application` at that time,
-but its core functionalities are basically the same with this project.
+but its core functionalities are basically the same as this project.
 Also note that this project is just a tool that can only transfer real-time images
 (no audio yet) without any customization.
-
-<!-- </font> -->
-<a target="_self" href="#" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">返回顶部 | Back to Top</a>
 
