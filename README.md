@@ -83,6 +83,7 @@ $ vim ~/etc/lan_camera.srv.json # Edit items in it accordingly, especially /netw
 $
 $ sudo sysctl -w net.core.wmem_max=$((1024 * 1024 * 12)) # after EACH system REBOOT
 $
+$ make distclean-server
 $ make prepare-server server install-server # CAUTION: Delete or back up old version stuff yourself before this.
 $ source scripts/aliases.sh
 $ lanc_server # Use "screen" command to interact with it. Its log file is /tmp/lanc_server.log.
@@ -102,6 +103,7 @@ $
 $ jq -r '.save.enabled = false' --indent 4 etc/lan_camera.cli.json > ~/etc/lan_camera.cli.json
 $ vim ~/etc/lan_camera.cli.json # Edit items in it accordingly, especially /network/connect/ip and /save/sync/ip.
 $
+$ make distclean-client
 $ make prepare-client client install-client # CAUTION: Delete or back up old version stuff yourself before this.
 $ source scripts/aliases.sh
 $ lanc_client # Its log file is /tmp/lanc_client.log
