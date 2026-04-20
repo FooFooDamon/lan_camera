@@ -240,7 +240,7 @@ static void convert_image_format(const std::vector<cv::Mat> &inputs, cv::Mat &ou
 }
 
 __attribute__((weak))
-void biz_capture_image(biz_context_t *ctx, int index)
+void biz_capture_image_frames(biz_context_t *ctx, int index)
 {
     const auto &conf = *ctx->conf;
     const auto &size = conf.camera.image_sizes[conf.camera.which_size - 1];
@@ -345,7 +345,7 @@ void biz_capture_image(biz_context_t *ctx, int index)
 
 // TODO:
 //__attribute__((weak))
-//void biz_capture_audio(biz_context_t *ctx, int index)
+//void biz_capture_audio_slices(biz_context_t *ctx, int index)
 //{
 //}
 
@@ -356,5 +356,8 @@ void biz_capture_image(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
+ *  01. Rename biz_capture_image() to biz_capture_image_frames().
  */
 

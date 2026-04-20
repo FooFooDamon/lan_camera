@@ -213,19 +213,19 @@ static inline ssize_t retriable_sendmsg(int fd, const struct msghdr &msg, uint8_
 #else
     int total_timeout_usecs = timeout_usecs_per_retry * max_retries;
     fd_set fds;
-    struct timeval timesout;
+    struct timeval timeout;
     int ret;
     int err;
 
     FD_ZERO(&fds);
     FD_SET(fd, &fds);
-    timesout.tv_sec = total_timeout_usecs / 1000000;
-    timesout.tv_usec = total_timeout_usecs % 1000000;
+    timeout.tv_sec = total_timeout_usecs / 1000000;
+    timeout.tv_usec = total_timeout_usecs % 1000000;
 
 lbl_sendmsg_poll:
-    if (0 == (ret = select(fd + 1, nullptr, &fds, nullptr, &timesout)))
+    if (0 == (ret = select(fd + 1, nullptr, &fds, nullptr, &timeout)))
     {
-        //LOG_ERROR("*** Timed out after %d us", total_delay_usecs);
+        //LOG_ERROR("*** Timed out after %d us", total_timeout_usecs);
 
         return -EAGAIN;
     }
@@ -246,7 +246,7 @@ lbl_sendmsg_poll:
 }
 
 __attribute__((weak))
-void biz_send_image(biz_context_t *ctx, int index)
+void biz_send_image_frames(biz_context_t *ctx, int index)
 {
     SET_THREAD_NAME("lanc/send:v");
 
@@ -436,6 +436,7 @@ void biz_send_image(biz_context_t *ctx, int index)
 
             if ((ret = retriable_sendmsg(fd, msg, batch_size, timeout_usecs_per_retry)) < 0)
             {
+                ++ctx->skipped_sending_count;
                 LOG_ERROR("*** Failed to send fragment[%d/%d] (%d/%d bytes) of frame[%lu]: %d(%s)",
                     header.packet_seq - 1, header.total_packets - 1, (int)iov[1].iov_len, encoded_size,
                     frame_seq, -ret, strerror(-ret));
@@ -460,7 +461,7 @@ void biz_send_image(biz_context_t *ctx, int index)
 
 // TODO:
 //__attribute__((weak))
-//void biz_send_audio(biz_context_t *ctx, int index)
+//void biz_send_audio_slices(biz_context_t *ctx, int index)
 //{
 //}
 
@@ -471,5 +472,8 @@ void biz_send_image(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
+ *  01. Rename biz_send_image() to biz_send_image_frames().
  */
 

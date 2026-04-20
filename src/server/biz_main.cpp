@@ -187,15 +187,15 @@ static void biz_context_destruct(biz_context_t &ctx)
 }
 
 extern void biz_listen(biz_context_t *ctx, int index);
-extern void biz_capture_image(biz_context_t *ctx, int index);
-//extern void biz_capture_audio(biz_context_t *ctx, int index);
+extern void biz_capture_image_frames(biz_context_t *ctx, int index);
+//extern void biz_capture_audio_slices(biz_context_t *ctx, int index);
 extern void biz_resize(biz_context_t *ctx, int index);
 extern void biz_infer(biz_context_t *ctx, int index);
 extern void biz_save_video(biz_context_t *ctx, int index);
 //extern void biz_save_audio(biz_context_t *ctx, int index);
 //extern void biz_flush(biz_context_t *ctx, int index);
-extern void biz_send_image(biz_context_t *ctx, int index);
-//extern void biz_send_audio(biz_context_t *ctx, int index);
+extern void biz_send_image_frames(biz_context_t *ctx, int index);
+//extern void biz_send_audio_slices(biz_context_t *ctx, int index);
 
 typedef void (*biz_exec_func_t)(biz_context_t *, int);
 
@@ -225,8 +225,8 @@ static DECLARE_BIZ_FUN(server_biz)
         biz_exec_func_t func;
         int index;
     } biz_executors[] = {
-        { biz_send_image, 0 },
-        //{ biz_send_audio, 0 },
+        { biz_send_image_frames, 0 },
+        //{ biz_send_audio_slices, 0 },
         //{ biz_flush, 0 },
         //{ biz_flush, 1 },
         { biz_save_video, 0 },
@@ -235,8 +235,8 @@ static DECLARE_BIZ_FUN(server_biz)
         //{ biz_save_audio, 1 },
         { biz_infer, 0 },
         { biz_resize, 0 },
-        { biz_capture_image, 0 },
-        //{ biz_capture_audio, 0 },
+        { biz_capture_image_frames, 0 },
+        //{ biz_capture_audio_slices, 0 },
         { biz_listen, 0 },
     };
 
@@ -253,10 +253,10 @@ static DECLARE_BIZ_FUN(server_biz)
     }
 #else // FIXME: But delay is not needed when threads are made one by one, why?!
     std::thread send_image_thread([&](){
-        biz_send_image(&ctx, 0);
+        biz_send_image_frames(&ctx, 0);
     });
     //std::thread send_audio_thread([&](){
-    //    biz_send_audio(&ctx, 0);
+    //    biz_send_audio_slices(&ctx, 0);
     //});
 
     //std::thread flush_thread1([&](){
@@ -284,10 +284,10 @@ static DECLARE_BIZ_FUN(server_biz)
     });
 
     std::thread capture_image_thread([&](){
-        biz_capture_image(&ctx, 0);
+        biz_capture_image_frames(&ctx, 0);
     });
     //std::thread capture_audio_thread([&](){
-    //    biz_capture_audio(&ctx, 0);
+    //    biz_capture_audio_slices(&ctx, 0);
     //});
 
     std::thread listen_thread([&](){
@@ -388,5 +388,8 @@ lbl_unload_conf:
  *
  * >>> 2026-04-18, Man Hung-Coeng <udc577@126.com>:
  *  01. Initial commit.
+ *
+ * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
+ *  01. Rename biz_{capture,send}_image() to biz_{capture,send}_image_frames().
  */
 
