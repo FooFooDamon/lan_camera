@@ -5,7 +5,7 @@
 # All rights reserved.
 #
 
-.PHONY: all prepare dependencies
+.PHONY: all prepare dependencies distclean
 
 LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 COMMON_DIR := ../common
@@ -108,23 +108,30 @@ versions.h: .revision
 .ALWAYS_MAKE:
 
 override INSTALL := install -D --compare --backup=numbered
+override LS := ls -h -g -o
+override OLD_VER_WARN := awk '{ print $$3, $$4, $$5, $$6, $$7 }' | xargs -I {} echo "*** Found old version: {}"
 
 install:
 	$(if $(wildcard ${CORE_LIB}),${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${CORE_LIB}),ls ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null || :)
+	$(if $(wildcard ${CORE_LIB}),${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
 	${INSTALL} ${TARGET} ${EXE_DIR}/${TARGET}
-	ls ${EXE_DIR}/${TARGET}.* 2> /dev/null || :
+	${LS} ${EXE_DIR}/${TARGET}.* 2> /dev/null | ${OLD_VER_WARN}
 
 uninstall:
-	rm -f ${EXE_DIR}/${TARGET}
-	ls ${EXE_DIR}/${TARGET}.* 2> /dev/null || :
+	${DEL_FILE} ${EXE_DIR}/${TARGET}
+	${LS} ${EXE_DIR}/${TARGET}.* 2> /dev/null | ${OLD_VER_WARN}
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),rm ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),ls ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null || :)
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
+
+download_clean:
+	${DEL_FILE} $(notdir ${PREREQUISITE_FILES} ${COMMON_C_SRCS} ${COMMON_CXX_SRCS})
+
+distclean: download_clean dependencies
 
 clean: ext_clean
 
 ext_clean:
-	rm -f ${TARGET} *.d *.plist $(if ${CUST_LIB}, ${CORE_LIB} *.o)
+	${DEL_FILE} ${TARGET} *.d *.plist $(if ${CUST_LIB}, ${CORE_LIB} *.o)
 
 check:
 	-${NO_CPPCHECK} \
@@ -151,7 +158,7 @@ debug_patch:
 	fi
 
 ui_fix: ui_${TARGET}.h
-	sed -i 's/\(.*\<QPalette::PlaceholderText\>.*\)/\/\/\1/' $<
+	${SED} -i 's/\(.*\<QPalette::PlaceholderText\>.*\)/\/\/\1/' $<
 
 endif
 
@@ -160,6 +167,6 @@ export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR})
 dependencies:
 	@for i in ${DEPENDENCY_DIRS}; \
 	do \
-		[ -s $${i}/[Mm]akefile ] && ${MAKE} $(filter all prepare, ${MAKECMDGOALS}) -C $${i} || true; \
+		[ -s $${i}/[Mm]akefile ] && ${MAKE} $(filter all prepare distclean, ${MAKECMDGOALS}) -C $${i} || true; \
 	done
 

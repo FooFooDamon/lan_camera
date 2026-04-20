@@ -5,7 +5,7 @@
 # All rights reserved.
 #
 
-.PHONY: all prepare dependencies .ALWAYS_MAKE install uninstall
+.PHONY: all prepare dependencies .ALWAYS_MAKE install uninstall dist distclean
 
 LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 COMMON_DIR := ../common
@@ -104,22 +104,31 @@ versions.h: .revision
 .ALWAYS_MAKE:
 
 override INSTALL := install -D --compare --backup=numbered
+override LS := ls -h -g -o
+override OLD_VER_WARN := awk '{ print $$3, $$4, $$5, $$6, $$7 }' | xargs -I {} echo "*** Found old version: {}"
 
 install:
 	$(if $(wildcard ${CORE_LIB}),$(if ${Q},@printf 'INSTALL\t${LIB_DIR}/${CORE_LIB}\n'))
 	$(if $(wildcard ${CORE_LIB}),${Q}${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${CORE_LIB}),${Q}ls ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null || :)
+	$(if $(wildcard ${CORE_LIB}),${Q}${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
 	$(if ${Q},@printf 'INSTALL\t${EXE_DIR}/${EXE_FILE}\n')
 	${Q}${INSTALL} ${EXE_FILE} ${EXE_DIR}/${EXE_FILE}
-	${Q}ls ${EXE_DIR}/${EXE_FILE}.* 2> /dev/null || :
+	${Q}${LS} ${EXE_DIR}/${EXE_FILE}.* 2> /dev/null | ${OLD_VER_WARN}
 
 uninstall:
 	$(if ${Q},@printf 'RM\t${EXE_DIR}/${EXE_FILE}\n')
-	${Q}rm -f ${EXE_DIR}/${EXE_FILE}
-	${Q}ls ${EXE_DIR}/${EXE_FILE}.* 2> /dev/null || :
+	${Q}${RM} ${EXE_DIR}/${EXE_FILE}
+	${Q}${LS} ${EXE_DIR}/${EXE_FILE}.* 2> /dev/null | ${OLD_VER_WARN}
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),$(if ${Q},@printf 'RM\t${LIB_DIR}/${CORE_LIB}\n'))
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${Q}rm ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${Q}ls ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null || :)
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${Q}${RM} ${LIB_DIR}/${CORE_LIB})
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${Q}${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
+
+dist:
+
+distclean: clean download_clean dependencies
+
+download_clean:
+	${Q}${RM} $(notdir ${LAZY_CODING_MAKEFILES} ${PREREQUISITE_FILES} ${COMMON_C_SRCS} ${COMMON_CXX_SRCS})
 
 export __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
 C_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN
@@ -149,6 +158,6 @@ export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR})
 dependencies:
 	@for i in ${DEPENDENCY_DIRS}; \
 	do \
-		[ -s $${i}/[Mm]akefile ] && ${MAKE} $(filter all prepare, ${MAKECMDGOALS}) -C $${i} || true; \
+		[ -s $${i}/[Mm]akefile ] && ${MAKE} $(filter all prepare distclean, ${MAKECMDGOALS}) -C $${i} || true; \
 	done
 

@@ -5,7 +5,7 @@
 # All rights reserved.
 #
 
-.PHONY: all prepare revision
+.PHONY: all prepare revision distclean
 
 export LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 
@@ -43,4 +43,7 @@ export EVAL_VERSION_ONCE ?= Y
 include ${REV_MKFILE}
 
 endif
+
+distclean:
+	@${RM} $(notdir ${REV_MKFILE} ${PREREQUISITE_FILES})
 
