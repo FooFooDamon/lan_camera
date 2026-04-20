@@ -218,106 +218,50 @@ static DECLARE_BIZ_FUN(server_biz)
     }
 
     bool is_test = ("test" == ctx.cmd_args->biz);
-#if 1
+    bool inference_enabled = ctx.conf->inference.enabled;
     std::vector<std::thread> biz_threads;
     struct
     {
         biz_exec_func_t func;
         int index;
+        bool is_needed;
     } biz_executors[] = {
-        { biz_send_image_frames, 0 },
-        //{ biz_send_audio_slices, 0 },
-        //{ biz_flush, 0 },
-        //{ biz_flush, 1 },
-        { biz_save_video, 0 },
-        { biz_save_video, 1 },
-        //{ biz_save_audio, 0 },
-        //{ biz_save_audio, 1 },
-        { biz_infer, 0 },
-        { biz_resize, 0 },
-        { biz_capture_image_frames, 0 },
-        //{ biz_capture_audio_slices, 0 },
-        { biz_listen, 0 },
+        { biz_send_image_frames, 0, true },
+        //{ biz_send_audio_slices, 0, true },
+        //{ biz_flush, 0, true },
+        //{ biz_flush, 1, !is_test },
+        { biz_save_video, 0, true },
+        { biz_save_video, 1, !is_test },
+        //{ biz_save_audio, 0, true },
+        //{ biz_save_audio, 1, !is_test },
+        { biz_infer, 0, inference_enabled },
+        { biz_resize, 0, inference_enabled },
+        { biz_capture_image_frames, 0, true },
+        //{ biz_capture_audio_slices, 0, true },
+        //{ biz_listen, 0, true },
     };
 
     //biz_threads.reserve(sizeof(biz_executors) / sizeof(biz_executors[0])); // no help for preventing crash
     for (size_t i = 0; i < sizeof(biz_executors) / sizeof(biz_executors[0]); ++i)
     {
-        if (biz_executors[i].index > 0 && is_test)
-            continue;
+        if (biz_executors[i].is_needed)
+        {
+            biz_threads.push_back(std::thread([&](){
+                biz_executors[i].func(&ctx, biz_executors[i].index);
+            }));
 
-        biz_threads.push_back(std::thread([&](){
-            biz_executors[i].func(&ctx, biz_executors[i].index);
-        }));
-        usleep(1000); // FIXME: Will crash without this delay, why?!
+            usleep(1000); // FIXME: Will crash without this delay, why?!
+        }
     }
-#else // FIXME: But delay is not needed when threads are made one by one, why?!
-    std::thread send_image_thread([&](){
-        biz_send_image_frames(&ctx, 0);
-    });
-    //std::thread send_audio_thread([&](){
-    //    biz_send_audio_slices(&ctx, 0);
-    //});
 
-    //std::thread flush_thread1([&](){
-    //    biz_flush(&ctx, 0);
-    //});
-    //std::thread flush_thread2 = is_test ? std::thread()
-    //    : std::thread([&]() { biz_flush(&ctx, 1); }); 
-    std::thread save_video_thread1([&](){
-        biz_save_video(&ctx, 0);
-    });
-    std::thread save_video_thread2 = is_test ? std::thread()
-        : std::thread([&]() { biz_save_video(&ctx, 1); }); 
-    //std::thread save_audio_thread1([&](){
-    //    biz_save_audio(&ctx, 0);
-    //});
-    //std::thread save_audio_thread2 = is_test ? std::thread()
-    //    : std::thread([&]() { biz_save_audio(&ctx, 1); }); 
+    biz_listen(&ctx, 0); // There's a loop within it.
 
-    std::thread infer_thread([&](){
-        biz_infer(&ctx, 0);
-    });
+    raise(SIGURG); // Interrupt select() in child threads. This raised signal MUST NOT be registered!
 
-    std::thread resize_thread([&](){
-        biz_resize(&ctx, 0);
-    });
-
-    std::thread capture_image_thread([&](){
-        biz_capture_image_frames(&ctx, 0);
-    });
-    //std::thread capture_audio_thread([&](){
-    //    biz_capture_audio_slices(&ctx, 0);
-    //});
-
-    std::thread listen_thread([&](){
-        biz_listen(&ctx, 0);
-    });
-#endif
-
-#if 1
     for (int i = biz_threads.size() - 1; i >= 0; --i)
     {
         biz_threads[i].join();
     }
-#else
-    listen_thread.join();
-    //capture_audio_thread.join();
-    capture_image_thread.join();
-    resize_thread.join();
-    infer_thread.join();
-    //if (!is_test)
-    //    save_audio_thread2.join();
-    //save_audio_thread1.join();
-    if (!is_test)
-        save_video_thread2.join();
-    save_video_thread1.join();
-    //if (!is_test)
-    //    flush_thread2.join();
-    //flush_thread1.join();
-    //send_audio_thread.join();
-    send_image_thread.join();
-#endif
 
     print_received_signals();
 
@@ -391,5 +335,6 @@ lbl_unload_conf:
  *
  * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
  *  01. Rename biz_{capture,send}_image() to biz_{capture,send}_image_frames().
+ *  02. Put listen logic in main thread, and start all child threads as needed.
  */
 
