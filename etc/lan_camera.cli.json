@@ -13,17 +13,17 @@
             "ip": "192.168.11.11",
             "port": 59394,
             "heartbeat_msecs": 500,
-            "poll_timeout_msecs": 10000
+            "poll_timeout_msecs": 3500
         }
     },
 
     "save": {
-        "enabled": true,
+        "enabled": false,
         "dir": "/opt/lan_camera/save",
         "ramfs": {
             "enabled": true,
             "path": "/tmp"
-        }, 
+        },
         "delays_flushing": false,
         "min_duration_secs": 10,
         "backup_history_days": 90,
@@ -32,7 +32,7 @@
             "port": 873,
             "user": "lanc",
             "password": "file:///usr/local/etc/rsync-lanc.pswd",
-            "common_options": "--archive --verbose --compress --recursive --delete --executability --links --hard-links -P",
+            "common_options": "-arvz --delete --perms --links --hard-links --times -P",
             "ssh_example": "rsync --rsh='sshpass -p ${password} ssh -l ${user}' ${common-options} --port={port} ${user}@${ip}:${dir}/server ${dir}/",
             "auth_rsync_example": "rsync --password-file=/usr/local/etc/rsync.pswd ${common-options} rsync://${user}@${ip}:{port}/lan_camera ${dir}/server",
             "anon_rsync_example": "rsync ${common-options} rsync://${ip}:{port}/lan_camera ${dir}/server"

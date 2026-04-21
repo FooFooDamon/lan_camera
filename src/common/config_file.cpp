@@ -142,9 +142,9 @@ static int parse_network_config(const Json::Value &root, const char *part, conf_
             config_endpoint.peer_port = obj_endpoint.get(item_key, DEFAULT_SERVER_PORT).asUInt();
         }
         item_key = "heartbeat_msecs";
-        config_endpoint.heartbeat_msecs = obj_endpoint.get(item_key, is_server ? 1000 : 500).asUInt();
+        config_endpoint.heartbeat_msecs = obj_endpoint.get(item_key, is_server ? 1500 : 500).asUInt();
         item_key = "poll_timeout_msecs";
-        config_endpoint.poll_timeout_msecs = obj_endpoint.get(item_key, is_server ? 1000 : 10000).asUInt();
+        config_endpoint.poll_timeout_msecs = obj_endpoint.get(item_key, is_server ? 2000 : 3500).asUInt();
         if (!is_server)
             goto lbl_print_role_info;
 
@@ -179,7 +179,7 @@ static int parse_network_config(const Json::Value &root, const char *part, conf_
         item_key = "packets_per_batch";
         config_send_policy.packets_per_batch = obj_send_policy.get(item_key, 5).asUInt();
         item_key = "batch_gap_usecs";
-        config_send_policy.batch_gap_usecs = obj_send_policy.get(item_key, 50).asUInt();
+        config_send_policy.batch_gap_usecs = obj_send_policy.get(item_key, 100).asUInt();
         item_key = "sendbuf_size";
         config_send_policy.sendbuf_size = obj_send_policy.get(item_key, 1024 * 1024 * 8).asUInt();
     }
@@ -239,7 +239,7 @@ static int parse_save_config(const Json::Value &root, const char *part, conf_fil
     {
         obj_name = nullptr;
         item_key = "enabled";
-        result.save.enabled = part_obj.get(item_key, true).asBool();
+        result.save.enabled = part_obj.get(item_key, (ROLE_SERVER == result.role.type)).asBool();
         item_key = "dir";
         result.save.dir = part_obj.get(item_key, LANC_ROOT_DIR "/save").asString();
         item_key = "delays_flushing";
@@ -615,7 +615,7 @@ static int parse_inference_config(const Json::Value &root, const char *part, con
         item_key = "enabled";
         result.inference.enabled = part_obj.get(item_key, false).asBool();
         item_key = "spacing_frame_count";
-        result.inference.spacing_frame_count = part_obj.get(item_key, 14).asUInt();
+        result.inference.spacing_frame_count = part_obj.get(item_key, 4).asUInt();
     }
     catch (const Json::Exception &e)
     {
@@ -656,7 +656,7 @@ static int parse_test_config(const Json::Value &root, const char *part, conf_fil
     {
         obj_name = nullptr;
         item_key = "capture_duration_secs";
-        result.test.capture_duration_secs = part_obj.get(item_key, 10).asUInt();
+        result.test.capture_duration_secs = part_obj.get(item_key, 20).asUInt();
     }
     catch (const Json::Exception &e)
     {
@@ -789,5 +789,8 @@ void unload_config_file(conf_file_t &config)
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Parse the new added field "enabled" in parse_inference_config().
+ *
+ * >>> 2026-04-21, Man Hung-Coeng <udc577@126.com>:
+ *  01. Adjust several default values.
  */
 
