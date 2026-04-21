@@ -141,9 +141,8 @@ __pycache__
 
 
 custom.mk
-lanc_*
-!lanc_client.sh
-!lanc_server.sh
+lanc_client
+lanc_server
 save
 src/client/biz_protocols.cpp
 src/client/biz_save.cpp
