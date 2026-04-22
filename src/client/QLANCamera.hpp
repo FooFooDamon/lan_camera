@@ -37,6 +37,12 @@ protected:
     void closeEvent(QCloseEvent *event) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    // ----
+    void initCameraTab(void);
+    void initVideosTab(void);
+    void initCanvasTab(void);
+    void initAboutTab(void);
+    void connectSignalsAndSlots(void);
 
 signals:
     void delegatingResize(int width, int height);
@@ -85,5 +91,8 @@ private:
  *
  * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-22, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add init*Tab() and connectSignalsAndSlots().
  */
 

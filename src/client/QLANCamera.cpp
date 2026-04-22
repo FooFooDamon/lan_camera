@@ -14,6 +14,8 @@
 #include "QLANCamera.hpp"
 
 #include <stack>
+#include <jsoncpp/json/version.h>
+#include <opencv2/core/version.hpp>
 //#include <QTextCodec> // QT += core
 #include <QDir> // QT += core
 #include <QCloseEvent> // QT += gui
@@ -57,66 +59,18 @@ QLANCamera::QLANCamera(struct biz_context *ctx, QWidget *parent/* = nullptr*/)
 
     load_record_hint_audio(m_start_sound, conf.audio.record_start.c_str(), conf.audio.volume);
     load_record_hint_audio(m_end_sound, conf.audio.record_end.c_str(), conf.audio.volume);
-    if ("player" == ctx->cmd_args->biz)
-        m_video_root_dir = ctx->cmd_args->play_dir;
-    else
-        m_video_root_dir = conf.save.dir + ((ROLE_CLIENT == conf.role.type && conf.save.enabled) ? "/client" : "/server");
-    m_video_player = std::make_shared<QMediaPlayer>(this);
-    m_video_player->setVideoOutput(this->vidwdtCanvas);
-    //this->treewdtFiles->setStyleSheet("background: black;");
-    //this->treewdtFiles->verticalScrollBar()->setStyleSheet("background: rgba(114, 159, 207, 128);");
-    //this->treewdtFiles->verticalScrollBar()->setStyleSheet("background: rgba(160, 160, 160, 128);");
-    this->treewdtFiles->verticalScrollBar()->setStyleSheet("background: rgba(128, 128, 128, 128);");
-    this->vidwdtCanvas->setPlayer(m_video_player.get());
-    this->sldProgressBar->setPlayer(m_video_player.get());
-#if 1
-    this->tab->setTabVisible(this->tab->indexOf(this->tabPlayer), false);
-#else // This does not work as expetected.
-    this->tabPlayer->setVisible(false);
-#endif
-    this->tabVideos->setEnabled(true);
 
-    this->connect(this, SIGNAL(delegatingResize(int,int)),
-        this, SLOT(__delegatingResize(int,int)));
-    this->connect(this, SIGNAL(delegatingClose(void)),
-        this, SLOT(__delegatingClose(void)));
-    this->connect(this, SIGNAL(delegatingPlayRecordStartAudio(void)),
-        this, SLOT(__delegatingPlayRecordStartAudio(void)));
-    this->connect(this, SIGNAL(delegatingPlayRecordEndAudio(void)),
-        this, SLOT(__delegatingPlayRecordEndAudio(void)));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    this->connect(m_video_player.get(), SIGNAL(stateChanged(QMediaPlayer::State)),
-#else
-    this->connect(m_video_player.get(), SIGNAL(playbackStateChanged(QMediaPlayer::PlaybackState)),
-#endif
-        this, SLOT(switchVideoTab(void)));
-    this->connect(m_video_player.get(), SIGNAL(positionChanged(qint64)),
-        this, SLOT(updateProgressPosition(qint64)));
-    this->connect(m_video_player.get(), SIGNAL(durationChanged(qint64)),
-        this, SLOT(updateProgressDuration(qint64)));
-    this->connect(this, SIGNAL(delegatingAddFileToVideoList(const char *)),
-        this, SLOT(addFileToVideoList(const char *)));
-    this->connect(this, SIGNAL(delegatingRemoveFileFromVideoList(const char *)),
-        this, SLOT(removeFileFromVideoList(const char *)));
-    this->connect(this, SIGNAL(delegatingRemoveDirFromVideoList(const char *)),
-        this, SLOT(removeDirFromVideoList(const char *)));
-    this->connect(this, SIGNAL(delegatingSyncLocalVideos(void)),
-        this, SLOT(syncLocalVideosIfNeeded(void)));
-    this->connect(this, SIGNAL(delegatingReloadVideoList(void)),
-        this, SLOT(reloadVideoList(void)));
-    this->connect(this->treewdtFiles, SIGNAL(itemActivated(QTreeWidgetItem *, int)),
-        this, SLOT(switchVideoListItemStatus(QTreeWidgetItem *, int)));
-    this->connect(this->treewdtFiles, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)),
-        this, SLOT(switchVideoListItemStatus(QTreeWidgetItem *, int)));
-    this->connect(this->treewdtFiles, SIGNAL(itemCollapsed(QTreeWidgetItem *)),
-        this, SLOT(switchVideoDirIcon(QTreeWidgetItem *)));
-    this->connect(this->treewdtFiles, SIGNAL(itemExpanded(QTreeWidgetItem *)),
-        this, SLOT(switchVideoDirIcon(QTreeWidgetItem *)));
+    this->initCameraTab();
+    this->initVideosTab();
+    this->initCanvasTab();
+    this->initAboutTab();
+
+    this->connectSignalsAndSlots();
 
     this->delegatingReloadVideoList();
     this->delegatingResize(size.first, size.second);
     this->setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
-    //this->setWindowTitle(QString::asprintf("%s [%s]", this->windowTitle().toStdString().c_str(), FULL_VERSION()));
+    this->setWindowTitle(QString::asprintf("%s [v%s]", this->windowTitle().toStdString().c_str(), FULL_VERSION()));
     m_window_title = this->windowTitle().toStdString();
     this->lblRealtimeInfo->setAlignment(Qt::AlignTop);
 #if 0 // not working
@@ -316,6 +270,115 @@ void QLANCamera::keyReleaseEvent(QKeyEvent *event)/* override */
         QWidget::keyReleaseEvent(event);
         break;
     }
+}
+
+void QLANCamera::initCameraTab(void)
+{
+    ; // empty
+}
+
+void QLANCamera::initVideosTab(void)
+{
+    const auto &conf = *m_ctx->conf;
+
+    if ("player" == m_ctx->cmd_args->biz)
+        m_video_root_dir = m_ctx->cmd_args->play_dir;
+    else
+        m_video_root_dir = conf.save.dir + ((ROLE_CLIENT == conf.role.type && conf.save.enabled) ? "/client" : "/server");
+    //this->treewdtFiles->setStyleSheet("background: black;");
+    this->treewdtFiles->verticalScrollBar()->setStyleSheet("background: rgba(128, 128, 128, 128);");
+    //this->tabVideos->setEnabled(true); // FIXME: What is this for?!
+}
+
+void QLANCamera::initCanvasTab(void)
+{
+    m_video_player = std::make_shared<QMediaPlayer>(this);
+    m_video_player->setVideoOutput(this->vidwdtCanvas);
+    this->vidwdtCanvas->setPlayer(m_video_player.get());
+    this->sldProgressBar->setPlayer(m_video_player.get());
+#if 1
+    this->tab->setTabVisible(this->tab->indexOf(this->tabPlayer), false);
+#else // This does not work as expetected.
+    this->tabPlayer->setVisible(false);
+#endif
+}
+
+void QLANCamera::initAboutTab(void)
+{
+    this->tabAbout->setAutoFillBackground(true); // The palette settings would not take effect without this.
+    // The hyperlink is considered a local path without this. It's okay to set it in *.ui file.
+    //this->txtDeclaration->setOpenExternalLinks(true);
+    for (std::pair<QTextBrowser *, const char *> item : {
+        std::pair<QTextBrowser *, const char *>(this->txtQt, QT_VERSION_STR),
+        std::pair<QTextBrowser *, const char *>(this->txtOpenCV, CV_VERSION),
+        std::pair<QTextBrowser *, const char *>(this->txtJsonCpp, JSONCPP_VERSION_STRING),
+    })
+    {
+        QTextCursor cursor = item.first->textCursor();
+
+        cursor.movePosition(QTextCursor::End);
+        cursor.insertText(QString(" ") + item.second);
+        //item.first->setOpenExternalLinks(true);
+    }
+}
+
+#define SET_TEXTBROWSER_UNSELECTABLE(_browser_)      \
+    this->connect(_browser_, &QTextBrowser::copyAvailable, this, [this](bool yes) { \
+        if (yes) \
+        { \
+            QTextCursor cursor = _browser_->textCursor(); \
+\
+            cursor.clearSelection(); \
+            _browser_->setTextCursor(cursor); \
+        } \
+    })
+
+void QLANCamera::connectSignalsAndSlots(void)
+{
+    this->connect(this, SIGNAL(delegatingResize(int,int)),
+        this, SLOT(__delegatingResize(int,int)));
+    this->connect(this, SIGNAL(delegatingClose(void)),
+        this, SLOT(__delegatingClose(void)));
+
+    this->connect(this, SIGNAL(delegatingPlayRecordStartAudio(void)),
+        this, SLOT(__delegatingPlayRecordStartAudio(void)));
+    this->connect(this, SIGNAL(delegatingPlayRecordEndAudio(void)),
+        this, SLOT(__delegatingPlayRecordEndAudio(void)));
+
+    this->connect(this, SIGNAL(delegatingAddFileToVideoList(const char *)),
+        this, SLOT(addFileToVideoList(const char *)));
+    this->connect(this, SIGNAL(delegatingRemoveFileFromVideoList(const char *)),
+        this, SLOT(removeFileFromVideoList(const char *)));
+    this->connect(this, SIGNAL(delegatingRemoveDirFromVideoList(const char *)),
+        this, SLOT(removeDirFromVideoList(const char *)));
+    this->connect(this, SIGNAL(delegatingSyncLocalVideos(void)),
+        this, SLOT(syncLocalVideosIfNeeded(void)));
+    this->connect(this, SIGNAL(delegatingReloadVideoList(void)),
+        this, SLOT(reloadVideoList(void)));
+    this->connect(this->treewdtFiles, SIGNAL(itemActivated(QTreeWidgetItem *, int)),
+        this, SLOT(switchVideoListItemStatus(QTreeWidgetItem *, int)));
+    this->connect(this->treewdtFiles, SIGNAL(itemDoubleClicked(QTreeWidgetItem *, int)),
+        this, SLOT(switchVideoListItemStatus(QTreeWidgetItem *, int)));
+    this->connect(this->treewdtFiles, SIGNAL(itemCollapsed(QTreeWidgetItem *)),
+        this, SLOT(switchVideoDirIcon(QTreeWidgetItem *)));
+    this->connect(this->treewdtFiles, SIGNAL(itemExpanded(QTreeWidgetItem *)),
+        this, SLOT(switchVideoDirIcon(QTreeWidgetItem *)));
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    this->connect(m_video_player.get(), SIGNAL(stateChanged(QMediaPlayer::State)),
+#else
+    this->connect(m_video_player.get(), SIGNAL(playbackStateChanged(QMediaPlayer::PlaybackState)),
+#endif
+        this, SLOT(switchVideoTab(void)));
+    this->connect(m_video_player.get(), SIGNAL(positionChanged(qint64)),
+        this, SLOT(updateProgressPosition(qint64)));
+    this->connect(m_video_player.get(), SIGNAL(durationChanged(qint64)),
+        this, SLOT(updateProgressDuration(qint64)));
+
+    SET_TEXTBROWSER_UNSELECTABLE(this->txtQt);
+    SET_TEXTBROWSER_UNSELECTABLE(this->txtOpenCV);
+    SET_TEXTBROWSER_UNSELECTABLE(this->txtJsonCpp);
+    SET_TEXTBROWSER_UNSELECTABLE(this->txtThanks);
 }
 
 void QLANCamera::__delegatingResize(int width, int height)
@@ -683,5 +746,8 @@ void QLANCamera::on_tab_currentChanged(int index)
  *
  * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-22, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initialization for the new About tab, and refactor the constructor.
  */
 
