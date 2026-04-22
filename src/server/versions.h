@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 #ifndef FULL_VERSION
-#define FULL_VERSION()                  (__VER__[0] ? (PRODUCT_VERSION "." __VER__) : (PRODUCT_VERSION))
+#define FULL_VERSION()                  (__VER__[0] ? (PRODUCT_VERSION "_" __VER__) : (PRODUCT_VERSION))
 #endif
 
 #ifdef __cplusplus
