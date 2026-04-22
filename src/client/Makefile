@@ -107,21 +107,26 @@ versions.h: .revision
 
 .ALWAYS_MAKE:
 
+export MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
+FULL_VER = ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
+override REALPATH := realpath -m
 override LS := ls -h -g -o
 override OLD_VER_WARN := awk '{ print $$3, $$4, $$5, $$6, $$7 }' | xargs -I {} echo "*** Found old version: {}"
 
-install:
-	$(if $(wildcard ${CORE_LIB}),${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${CORE_LIB}),${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
-	${INSTALL} ${TARGET} ${EXE_DIR}/${TARGET}
-	${LS} ${EXE_DIR}/${TARGET}.* 2> /dev/null | ${OLD_VER_WARN}
+install: ${TARGET}
+	$(if $(wildcard ${CORE_LIB}),${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB}.${FULL_VER})
+	$(if $(wildcard ${CORE_LIB}),cd ${LIB_DIR} && ${SYMLINK} ${CORE_LIB}.${FULL_VER} ${CORE_LIB})
+	$(if $(wildcard ${CORE_LIB}),${LS} ${LIB_DIR}/${CORE_LIB}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN})
+	${INSTALL} ${TARGET} ${EXE_DIR}/${TARGET}.${FULL_VER}
+	cd ${EXE_DIR} && ${SYMLINK} ${TARGET}.${FULL_VER} ${TARGET}
+	${LS} ${EXE_DIR}/${TARGET}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN}
 
 uninstall:
-	${DEL_FILE} ${EXE_DIR}/${TARGET}
-	${LS} ${EXE_DIR}/${TARGET}.* 2> /dev/null | ${OLD_VER_WARN}
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),rm ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
+	${LS} $(shell ${REALPATH} ${EXE_DIR}/${TARGET}).* 2> /dev/null | ${OLD_VER_WARN}
+	${DEL_FILE} ${EXE_DIR}/${TARGET} $(shell ${REALPATH} ${EXE_DIR}/${TARGET})
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${LS} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}).* 2> /dev/null | ${OLD_VER_WARN})
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${DEL_FILE} ${LIB_DIR}/${CORE_LIB} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}))
 
 download_clean:
 	${DEL_FILE} $(notdir ${PREREQUISITE_FILES} ${COMMON_C_SRCS} ${COMMON_CXX_SRCS})

@@ -103,25 +103,31 @@ versions.h: .revision
 
 .ALWAYS_MAKE:
 
+export MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
+FULL_VER = ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
+override SYMLINK := ln -sf
+override REALPATH := realpath -m
 override LS := ls -h -g -o
 override OLD_VER_WARN := awk '{ print $$3, $$4, $$5, $$6, $$7 }' | xargs -I {} echo "*** Found old version: {}"
 
-install:
+install: $(if $(wildcard ${CORE_LIB}), ${GOALS}, ${GOAL})
 	$(if $(wildcard ${CORE_LIB}),$(if ${Q},@printf 'INSTALL\t${LIB_DIR}/${CORE_LIB}\n'))
-	$(if $(wildcard ${CORE_LIB}),${Q}${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${CORE_LIB}),${Q}${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
+	$(if $(wildcard ${CORE_LIB}),${Q}${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB}.${FULL_VER})
+	$(if $(wildcard ${CORE_LIB}),${Q}cd ${LIB_DIR} && ${SYMLINK} ${CORE_LIB}.${FULL_VER} ${CORE_LIB})
+	$(if $(wildcard ${CORE_LIB}),${Q}${LS} ${LIB_DIR}/${CORE_LIB}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN})
 	$(if ${Q},@printf 'INSTALL\t${EXE_DIR}/${EXE_FILE}\n')
-	${Q}${INSTALL} ${EXE_FILE} ${EXE_DIR}/${EXE_FILE}
-	${Q}${LS} ${EXE_DIR}/${EXE_FILE}.* 2> /dev/null | ${OLD_VER_WARN}
+	${Q}${INSTALL} ${EXE_FILE} ${EXE_DIR}/${EXE_FILE}.${FULL_VER}
+	${Q}cd ${EXE_DIR} && ${SYMLINK} ${EXE_FILE}.${FULL_VER} ${EXE_FILE}
+	${Q}${LS} ${EXE_DIR}/${EXE_FILE}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN}
 
 uninstall:
 	$(if ${Q},@printf 'RM\t${EXE_DIR}/${EXE_FILE}\n')
-	${Q}${RM} ${EXE_DIR}/${EXE_FILE}
-	${Q}${LS} ${EXE_DIR}/${EXE_FILE}.* 2> /dev/null | ${OLD_VER_WARN}
+	${Q}${LS} $(shell ${REALPATH} ${EXE_DIR}/${EXE_FILE}).* 2> /dev/null | ${OLD_VER_WARN}
+	${Q}${RM} ${EXE_DIR}/${EXE_FILE} $(shell ${REALPATH} ${EXE_DIR}/${EXE_FILE})
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),$(if ${Q},@printf 'RM\t${LIB_DIR}/${CORE_LIB}\n'))
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${Q}${RM} ${LIB_DIR}/${CORE_LIB})
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${Q}${LS} ${LIB_DIR}/${CORE_LIB}.* 2> /dev/null | ${OLD_VER_WARN})
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${Q}${LS} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}).* 2> /dev/null | ${OLD_VER_WARN})
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${Q}${RM} ${LIB_DIR}/${CORE_LIB} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}))
 
 dist:
 
