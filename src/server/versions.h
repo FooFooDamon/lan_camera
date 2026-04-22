@@ -9,6 +9,12 @@
  *
  * >>> V0.1.1|2026-04-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Fix the customization bug.
+ *
+ * >>> V0.1.2|2026-04-22, Man Hung-Coeng <udc577@126.com>:
+ *  01. Rename several biz executor functions.
+ *  02. Optimize the creation of child threads.
+ *  03. Adjust several default values of configuration.
+ *  04. Optimize deployment with version control.
  */
 
 #ifndef __VERSIONS_H__
@@ -27,7 +33,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       1
+#define PATCH_VER                       2
 #endif
 
 #ifndef __VER__
