@@ -136,6 +136,12 @@ typedef struct packet_head
 
 #define DEFINE_PROTO_VERSION_FUNC(_ver_)    static inline constexpr uint32_t version(void) { return _ver_; }
 
+#if __cplusplus >= 201103L
+#define PROTO_FIELD_OFFSET                  offsetof
+#else
+#define PROTO_FIELD_OFFSET(_type_, _field_) ((size_t)&((_type_ *)0)->_field_)
+#endif
+
 // NOTE: This enum type can be defined in somewhere else,
 //      but its name after the enum keyword should not change
 //      since the doc generation of packet_body_prefix depends on it!
@@ -433,5 +439,6 @@ typedef struct reply_0005_live_stream //! Live Stream Reply
  *
  * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
  *  01. Replace global PROTO_VERSION with version() in each protocol body class.
+ *  02. Add macro PROTO_FIELD_OFFSET().
  */
 
