@@ -223,7 +223,7 @@ void biz_connect(biz_context_t *ctx, int index)
     packet_head_t header = {};
     reply_0001_connect_t conn_reply = {};
     const multicast_config_t &multicast = conn_reply.multicast;
-    const int MIN_CONN_REPLY_SIZE = sizeof(conn_reply) - sizeof(conn_reply.startup_time_secs);
+    const int MIN_CONN_REPLY_SIZE = PROTO_FIELD_OFFSET(reply_0001_connect_t, startup_time_secs);
     reply_0003_query_server_status_t status_reply = {};
     packet_body_prefix_t *prefix = &conn_reply.prefix;
     int send_ret;
@@ -347,5 +347,6 @@ void biz_connect(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
  *  01. Replace global PROTO_VERSION with version() in each protocol body class.
+ *  02. Calculate the minimum size of a connect reply the wiser way.
  */
 
