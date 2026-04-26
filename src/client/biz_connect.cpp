@@ -48,7 +48,7 @@ static int send_connect_request(int fd, const biz_context_t &ctx)
     s_header.set_for_current_packet(sizeof(s_body));
     COMMPROTO_CPP_SERIALIZE(&s_header, s_buf.data(), sizeof(s_header));
 
-    s_body.prefix.set(PROTO_VERSION, 0);
+    s_body.prefix.set(s_body.version(), 0);
     strncpy(s_body.name, ctx.conf->role.name.c_str(), sizeof(s_body.name) - 1);
     COMMPROTO_CPP_SERIALIZE(&s_body, s_buf.data() + sizeof(s_header), sizeof(s_body));
 
@@ -67,7 +67,7 @@ static int send_server_status_request(int fd, const biz_context_t &ctx)
     s_header.set_for_current_packet(sizeof(s_body));
     COMMPROTO_CPP_SERIALIZE(&s_header, s_buf.data(), sizeof(s_header));
 
-    s_body.prefix.set(PROTO_VERSION, 0);
+    s_body.prefix.set(s_body.version(), 0);
     s_body.needs_live_stream = ctx.needs_live_stream;
     COMMPROTO_CPP_SERIALIZE(&s_body, s_buf.data() + sizeof(s_header), sizeof(s_body));
 
@@ -344,5 +344,8 @@ void biz_connect(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
+ *  01. Replace global PROTO_VERSION with version() in each protocol body class.
  */
 

@@ -134,9 +134,7 @@ typedef struct packet_head
     }
 } packet_head_t;
 
-#ifndef PROTO_VERSION
-#define PROTO_VERSION                       0x01000000
-#endif
+#define DEFINE_PROTO_VERSION_FUNC(_ver_)    static inline constexpr uint32_t version(void) { return _ver_; }
 
 // NOTE: This enum type can be defined in somewhere else,
 //      but its name after the enum keyword should not change
@@ -260,6 +258,8 @@ typedef struct req_0000_connect //! Connect Request
     struct packet_body_prefix prefix; //!> | body prefix | See \ref{packet_body_prefix}
     char name[32]; //!> | client name |
 
+    DEFINE_PROTO_VERSION_FUNC(0x01000000);
+
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
         COMMPROTO_INT8_FIXED_ARRAY, COMMPROTO_ARRAY_LEN_IS(32), // name
@@ -287,6 +287,8 @@ typedef struct reply_0001_connect //! Connect Reply
     struct multicast_config multicast; //!> | multicast config | See \ref{multicast_config}
     uint64_t startup_time_secs; //!> | startup time in seconds |
 
+    DEFINE_PROTO_VERSION_FUNC(0x01000000);
+
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
         COMMPROTO_INT16, // image_width
@@ -310,6 +312,8 @@ typedef struct req_0002_query_server_status //! Query Server Status Request
     struct packet_body_prefix prefix; //!> | body prefix | See \ref{packet_body_prefix}
     uint8_t needs_live_stream; //!> | whether to need live stream |
 
+    DEFINE_PROTO_VERSION_FUNC(0x01000000);
+
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
         COMMPROTO_INT8, // needs_live_stream
@@ -330,6 +334,8 @@ typedef struct reply_0003_query_server_status //! Query Server Status Reply
     uint64_t total_saving_count; //!> | total saving count |
     uint64_t total_sending_count; //!> | total sending count |
     uint64_t total_inference_count; //!> | total inference count |
+
+    DEFINE_PROTO_VERSION_FUNC(0x01000000);
 
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
@@ -387,6 +393,8 @@ typedef struct reply_0005_live_stream //! Live Stream Reply
     arraylen32_t data_size; //!> | data size |
     uint8_t *stream_data; //!> | stream data |
 
+    DEFINE_PROTO_VERSION_FUNC(0x01000000);
+
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
         COMMPROTO_INT8, // inference_positive
@@ -422,5 +430,8 @@ typedef struct reply_0005_live_stream //! Live Stream Reply
  *
  * >>> 2026-04-06, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
+ *  01. Replace global PROTO_VERSION with version() in each protocol body class.
  */
 

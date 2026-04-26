@@ -318,7 +318,7 @@ void biz_send_image_frames(biz_context_t *ctx, int index)
     int ret;
     int i = 0;
 
-    body.prefix.set(PROTO_VERSION, PROTO_ERR_OK);
+    body.prefix.set(body.version(), PROTO_ERR_OK);
     body.compression_algo = get_compression_code(compression_algo);
     body.compression_level = conf.video.compression.second;
     body.image_format = get_image_format((enum compression_algo_e)body.compression_algo);
@@ -475,5 +475,8 @@ void biz_send_image_frames(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
  *  01. Rename biz_send_image() to biz_send_image_frames().
+ *
+ * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
+ *  01. Replace global PROTO_VERSION with version() in each protocol body class.
  */
 
