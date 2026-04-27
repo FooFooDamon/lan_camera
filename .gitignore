@@ -21,6 +21,7 @@
 !init.d
 !profile.d
 *.dat
+*.dbgi
 *.debug.pri
 *.dtb
 *.dtbo
