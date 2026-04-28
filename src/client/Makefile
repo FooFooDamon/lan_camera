@@ -89,6 +89,11 @@ ${TARGET}: ${CORE_LIB}
 #
 ${CORE_LIB}: ${CORE_OBJS}
 	${CXX} -shared -o $@ $^
+	if [ $$(echo "${DEFINES}" | grep -c "QT_NO_DEBUG") -gt 0 ]; then \
+		objcopy --only-keep-debug $@ $@.dbgi; \
+		${STRIP} --strip-debug $@; \
+		objcopy --add-gnu-debuglink=$@.dbgi $@; \
+	fi
 
 endif
 
@@ -144,7 +149,7 @@ distclean: download_clean dependencies
 clean: ext_clean
 
 ext_clean:
-	${DEL_FILE} ${TARGET} *.d *.plist $(if ${CUST_LIB}, ${CORE_LIB} *.o)
+	${DEL_FILE} ${TARGET} *.d *.plist *.dbgi $(if ${CUST_LIB}, ${CORE_LIB} *.o)
 
 check:
 	-${NO_CPPCHECK} \
