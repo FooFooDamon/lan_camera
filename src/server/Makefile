@@ -5,7 +5,7 @@
 # All rights reserved.
 #
 
-.PHONY: all prepare dependencies .ALWAYS_MAKE install uninstall dist distclean
+.PHONY: all prepare dependencies .ALWAYS_MAKE install_debug_info install uninstall dist distclean
 
 LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 COMMON_DIR := ../common
@@ -104,28 +104,37 @@ versions.h: .revision
 .ALWAYS_MAKE:
 
 export MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
-FULL_VER = ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
+export FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
+export DEBUG_DIR ?= ${HOME}/debug/${EXE_FILE}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
-override SYMLINK := ln -sf
 override REALPATH := realpath -m
 override LS := ls -h -g -o
 override OLD_VER_WARN := awk '{ print $$3, $$4, $$5, $$6, $$7 }' | xargs -I {} echo "*** Found old version: {}"
+override DEBUG_WARN := printf "\033[0;33m*** It's STRONGLY RECOMMENDED to move this file to another private host for safety! ***\033[0m\n"
 
-install: $(if $(wildcard ${CORE_LIB}), ${GOALS}, ${GOAL})
-	$(if $(wildcard ${CORE_LIB}),$(if ${Q},@printf 'INSTALL\t${LIB_DIR}/${CORE_LIB}\n'))
+install_debug_info:
+	$(if $(wildcard ${CORE_LIB}.dbgi),$(if ${Q},@printf 'INSTALL\t${DEBUG_DIR}/${CORE_LIB}.dbgi\n'))
+	$(if $(wildcard ${CORE_LIB}.dbgi),${Q}${INSTALL} --backup=off ${CORE_LIB}.dbgi ${DEBUG_DIR}/${CORE_LIB}.dbgi)
+	$(if $(wildcard ${CORE_LIB}.dbgi),$(if ${Q},@${DEBUG_WARN}))
+	$(if $(wildcard ${EXE_FILE}.dbgi),$(if ${Q},@printf 'INSTALL\t${DEBUG_DIR}/${EXE_FILE}.dbgi\n'))
+	$(if $(wildcard ${EXE_FILE}.dbgi),${Q}${INSTALL} --backup=off ${EXE_FILE}.dbgi ${DEBUG_DIR}/${EXE_FILE}.dbgi)
+	$(if $(wildcard ${EXE_FILE}.dbgi),$(if ${Q},@${DEBUG_WARN}))
+
+install: $(if $(wildcard ${CORE_LIB}), ${GOALS}, ${GOAL}) install_debug_info
+	$(if $(wildcard ${CORE_LIB}),$(if ${Q},@printf 'INSTALL\t${LIB_DIR}/${CORE_LIB}.${FULL_VER}\n'))
 	$(if $(wildcard ${CORE_LIB}),${Q}${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB}.${FULL_VER})
 	$(if $(wildcard ${CORE_LIB}),${Q}cd ${LIB_DIR} && ${SYMLINK} ${CORE_LIB}.${FULL_VER} ${CORE_LIB})
 	$(if $(wildcard ${CORE_LIB}),${Q}${LS} ${LIB_DIR}/${CORE_LIB}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN})
-	$(if ${Q},@printf 'INSTALL\t${EXE_DIR}/${EXE_FILE}\n')
+	$(if ${Q},@printf 'INSTALL\t${EXE_DIR}/${EXE_FILE}.${FULL_VER}\n')
 	${Q}${INSTALL} ${EXE_FILE} ${EXE_DIR}/${EXE_FILE}.${FULL_VER}
 	${Q}cd ${EXE_DIR} && ${SYMLINK} ${EXE_FILE}.${FULL_VER} ${EXE_FILE}
 	${Q}${LS} ${EXE_DIR}/${EXE_FILE}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN}
 
 uninstall:
-	$(if ${Q},@printf 'RM\t${EXE_DIR}/${EXE_FILE}\n')
+	$(if ${Q},@printf 'RM\t$(shell ${REALPATH} ${EXE_DIR}/${EXE_FILE})\n')
 	${Q}${LS} $(shell ${REALPATH} ${EXE_DIR}/${EXE_FILE}).* 2> /dev/null | ${OLD_VER_WARN}
 	${Q}${RM} ${EXE_DIR}/${EXE_FILE} $(shell ${REALPATH} ${EXE_DIR}/${EXE_FILE})
-	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),$(if ${Q},@printf 'RM\t${LIB_DIR}/${CORE_LIB}\n'))
+	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),$(if ${Q},@printf 'RM\t$(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB})\n'))
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${Q}${LS} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}).* 2> /dev/null | ${OLD_VER_WARN})
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${Q}${RM} ${LIB_DIR}/${CORE_LIB} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}))
 

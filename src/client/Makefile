@@ -96,7 +96,7 @@ cmdline_args.o: DEFINES += -DBIZ_TYPE_CANDIDATES='"client,player"' -DBIZ_TYPE_DE
                 -DBRIEF_INTRO='"Camera Client running on Local Area Network"'
 signal_handling.o: DEFINES += -U__STRICT_ANSI__
 
-.PHONY: .ALWAYS_MAKE install uninstall ext_clean check debug_patch ui_fix
+.PHONY: .ALWAYS_MAKE install_debug_info install uninstall ext_clean check debug_patch ui_fix
 
 versions.h: .revision
 	@touch $@
@@ -108,13 +108,21 @@ versions.h: .revision
 .ALWAYS_MAKE:
 
 export MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
-FULL_VER = ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
+export FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
+export DEBUG_DIR ?= ${HOME}/debug/${TARGET}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
 override REALPATH := realpath -m
 override LS := ls -h -g -o
 override OLD_VER_WARN := awk '{ print $$3, $$4, $$5, $$6, $$7 }' | xargs -I {} echo "*** Found old version: {}"
+override DEBUG_WARN := printf "\033[0;33m*** It's STRONGLY RECOMMENDED to move this file to another private host for safety! ***\033[0m\n"
 
-install: ${TARGET}
+install_debug_info:
+	$(if $(wildcard ${CORE_LIB}.dbgi),${INSTALL} --backup=off ${CORE_LIB}.dbgi ${DEBUG_DIR}/${CORE_LIB}.dbgi)
+	$(if $(wildcard ${CORE_LIB}.dbgi),@${DEBUG_WARN})
+	$(if $(wildcard ${TARGET}.dbgi),${INSTALL} --backup=off ${TARGET}.dbgi ${DEBUG_DIR}/${TARGET}.dbgi)
+	$(if $(wildcard ${TARGET}.dbgi),@${DEBUG_WARN})
+
+install: ${TARGET} install_debug_info
 	$(if $(wildcard ${CORE_LIB}),${INSTALL} ${CORE_LIB} ${LIB_DIR}/${CORE_LIB}.${FULL_VER})
 	$(if $(wildcard ${CORE_LIB}),cd ${LIB_DIR} && ${SYMLINK} ${CORE_LIB}.${FULL_VER} ${CORE_LIB})
 	$(if $(wildcard ${CORE_LIB}),${LS} ${LIB_DIR}/${CORE_LIB}.${FULL_VER}.* 2> /dev/null | ${OLD_VER_WARN})
