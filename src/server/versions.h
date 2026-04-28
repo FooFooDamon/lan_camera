@@ -15,6 +15,10 @@
  *  02. Optimize the creation of child threads.
  *  03. Adjust several default values of configuration.
  *  04. Optimize deployment with version control.
+ *
+ * >>> V0.1.3|2026-04-28, Man Hung-Coeng <udc577@126.com>:
+ *  01. Optimize version control of communication protocol.
+ *  02. Optimize program size of release mode.
  */
 
 #ifndef __VERSIONS_H__
@@ -33,7 +37,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       2
+#define PATCH_VER                       3
 #endif
 
 #ifndef __VER__
