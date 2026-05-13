@@ -55,7 +55,7 @@ override EXE_DIR := ${HOME}/bin
 override LIB_DIR := ${HOME}/lib
 override CORE_LIB := liblancc_core.so
 override CUST_LIB := $(wildcard ${LIB_DIR}/liblancc_cust.so)
-export __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
+__COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
 DEFINES += -D__VER__='"${__VER__}"' -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
             -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
             -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"' \
@@ -112,9 +112,9 @@ versions.h: .revision
 
 .ALWAYS_MAKE:
 
-export MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
-export FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
-export DEBUG_DIR ?= ${HOME}/debug/${TARGET}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
+MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
+FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
+DEBUG_DIR ?= ${HOME}/debug/${TARGET}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
 override REALPATH := realpath -m
 override LS := ls -h -g -o
@@ -180,11 +180,12 @@ ui_fix: ui_${TARGET}.h
 
 endif
 
-export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR})
+DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR})
 
 dependencies:
 	@for i in ${DEPENDENCY_DIRS}; \
 	do \
-		[ -s $${i}/[Mm]akefile ] && ${MAKE} $(filter all prepare distclean, ${MAKECMDGOALS}) -C $${i} || true; \
+		[ -s $${i}/[Mm]akefile ] || continue; \
+		${MAKE} -C $${i} $(filter all prepare distclean, ${MAKECMDGOALS}); \
 	done
 
