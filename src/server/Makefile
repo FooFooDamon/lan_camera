@@ -5,15 +5,14 @@
 # All rights reserved.
 #
 
-.PHONY: all prepare dependencies .ALWAYS_MAKE install_debug_info install uninstall dist distclean
+.PHONY: all prepare dependencies .ALWAYS_MAKE dist distclean install_debug_info install uninstall
 
 LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 COMMON_DIR := ../common
 
-export LAZY_CODING_MAKEFILES ?= $(abspath ${COMMON_DIR}/__ver__.mk c_and_cpp.mk)
+LAZY_CODING_MAKEFILES ?= $(abspath ${COMMON_DIR}/__ver__.mk c_and_cpp.mk)
 
-override undefine PREREQUISITE_FILES
-PREREQUISITE_FILES := \
+override PREREQUISITE_FILES := \
     ${LAZY_CODING_URL}/raw/e3c8088f4c13818d5c85818d3c43ad2d10a4f0ed/c_and_cpp/native/camera_v4l2.c \
     ${LAZY_CODING_URL}/raw/b3a4d5667aedabb967090ca5e02e9e633d8366ce/c_and_cpp/native/camera_v4l2.h \
 
@@ -36,26 +35,14 @@ else
 
 all: dependencies
 
-export EVAL_VERSION_ONCE ?= Y
-override NO_PRIV_STUFF := $(strip $(filter-out n N no NO No 0, ${NO_PRIV_STUFF}))
-export COMMON_C_SRCS ?= signal_handling.c communication_protocol.c
-export COMMON_CXX_SRCS ?= cmdline_args.cpp config_file.cpp biz_protocols.cpp biz_save.cpp
+COMMON_C_SRCS ?= ./signal_handling.c ./communication_protocol.c
+COMMON_CXX_SRCS ?= ./cmdline_args.cpp ./config_file.cpp ./biz_protocols.cpp ./biz_save.cpp
 
 C_SRCS := $(shell find ./ -name "*.c" | grep -v '\.priv\.c$$')
 C_SRCS := $(sort ${C_SRCS} ${COMMON_C_SRCS})
-ifeq (${NO_PRIV_STUFF},)
-    C_SRCS := $(foreach i, $(filter-out %.priv.c, ${C_SRCS}), \
-        $(if $(wildcard $(basename ${i}).priv.c), $(basename ${i}).priv.c, ${i}) \
-    )
-endif
 
 CXX_SRCS := $(shell find ./ -name "*.cpp" -o -name "*.cc" -o -name "*.cxx" | grep -v '\.priv\.[^.]\+$$')
 CXX_SRCS := $(sort ${CXX_SRCS} ${COMMON_CXX_SRCS})
-ifeq (${NO_PRIV_STUFF},)
-    CXX_SRCS := $(foreach i, $(filter-out $(addprefix %.priv, $(suffix ${CXX_SRCS})), ${CXX_SRCS}), \
-        $(if $(wildcard $(basename ${i}).priv$(suffix ${i})), $(basename ${i}).priv$(suffix ${i}), ${i}) \
-    )
-endif
 
 override EXE_DIR := ${HOME}/bin
 override LIB_DIR := ${HOME}/lib
@@ -88,11 +75,30 @@ ${EXE_FILE}: main.o ${CORE_LIB}
 
 endif
 
+__COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
+C_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN
+CXX_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
+                -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
+                -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"' \
+                $(if ${FMT_LOG_IMPL_H}, -DFMT_LOG_IMPL_H='"${FMT_LOG_IMPL_H}"')
+C_INCLUDES += -I${COMMON_DIR}
+CXX_INCLUDES += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
+OTHER_CFLAGS +=
+OTHER_CXXFLAGS +=
+C_LDFLAGS +=
+CXX_LDFLAGS += $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
+
 cmdline_args.o: CXX_DEFINES += -DBIZ_TYPE_CANDIDATES='"server,test"' -DBIZ_TYPE_DEFAULT='"server"' \
                 -DBRIEF_INTRO='"Camera Server running on Local Area Network"'
+
 signal_handling.o: C_DEFINES += -U__STRICT_ANSI__
 
 include ${LAZY_CODING_MAKEFILES}
+
+distclean: clean clean_downloads dependencies
+
+clean_downloads:
+	${Q}${RM} $(notdir ${LAZY_CODING_MAKEFILES} ${PREREQUISITE_FILES} ${COMMON_C_SRCS} ${COMMON_CXX_SRCS})
 
 versions.h: .revision
 	${Q}touch $@
@@ -103,9 +109,9 @@ versions.h: .revision
 
 .ALWAYS_MAKE:
 
-export MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
-export FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
-export DEBUG_DIR ?= ${HOME}/debug/${EXE_FILE}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
+MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
+FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
+DEBUG_DIR ?= ${HOME}/debug/${EXE_FILE}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
 override REALPATH := realpath -m
 override LS := ls -h -g -o
@@ -138,26 +144,6 @@ uninstall:
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}*),${Q}${LS} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}).* 2> /dev/null | ${OLD_VER_WARN})
 	$(if $(wildcard ${LIB_DIR}/${CORE_LIB}),${Q}${RM} ${LIB_DIR}/${CORE_LIB} $(shell ${REALPATH} ${LIB_DIR}/${CORE_LIB}))
 
-dist:
-
-distclean: clean download_clean dependencies
-
-download_clean:
-	${Q}${RM} $(notdir ${LAZY_CODING_MAKEFILES} ${PREREQUISITE_FILES} ${COMMON_C_SRCS} ${COMMON_CXX_SRCS})
-
-export __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
-C_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN
-CXX_DEFINES += -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
-                -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
-                -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"' \
-                $(if ${FMT_LOG_IMPL_H}, -DFMT_LOG_IMPL_H='"${FMT_LOG_IMPL_H}"')
-C_INCLUDES += -I${COMMON_DIR}
-CXX_INCLUDES += -I${COMMON_DIR} $(shell pkg-config --cflags opencv4)
-OTHER_CFLAGS +=
-OTHER_CXXFLAGS +=
-C_LDFLAGS +=
-CXX_LDFLAGS += $(shell pkg-config --libs opencv4) -ljsoncpp -llz4 -lz
-
 ${COMMON_C_SRCS} ${COMMON_CXX_SRCS}: %: ${COMMON_DIR}/%
 	$(if ${Q},@printf 'LINK\t$<\n')
 	${Q}ln -s $< $@
@@ -168,11 +154,12 @@ camera_v4l2.o: camera_v4l2.c
 
 endif
 
-export DEPENDENCY_DIRS ?= $(abspath ../3rdparty ${COMMON_DIR})
+DEPENDENCY_DIRS := $(abspath ../3rdparty ${COMMON_DIR})
 
 dependencies:
 	@for i in ${DEPENDENCY_DIRS}; \
 	do \
-		[ -s $${i}/[Mm]akefile ] && ${MAKE} $(filter all prepare distclean, ${MAKECMDGOALS}) -C $${i} || true; \
+		[ -s $${i}/[Mm]akefile ] || continue; \
+		${MAKE} -C $${i} $(filter all prepare distclean, ${MAKECMDGOALS}); \
 	done
 
