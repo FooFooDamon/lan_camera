@@ -229,11 +229,11 @@ static DECLARE_BIZ_FUN(server_biz)
         { biz_send_image_frames, 0, true },
         //{ biz_send_audio_slices, 0, true },
         //{ biz_flush, 0, true },
-        //{ biz_flush, 1, !is_test },
+        //{ biz_flush, 1, (!is_test && ctx.conf->save.has_dual_threads) },
         { biz_save_video, 0, true },
-        { biz_save_video, 1, !is_test },
+        { biz_save_video, 1, (!is_test && ctx.conf->save.has_dual_threads) },
         //{ biz_save_audio, 0, true },
-        //{ biz_save_audio, 1, !is_test },
+        //{ biz_save_audio, 1, (!is_test && ctx.conf->save.has_dual_threads) },
         { biz_infer, 0, inference_enabled },
         { biz_resize, 0, inference_enabled },
         { biz_capture_image_frames, 0, true },
@@ -336,5 +336,8 @@ lbl_unload_conf:
  * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
  *  01. Rename biz_{capture,send}_image() to biz_{capture,send}_image_frames().
  *  02. Put listen logic in main thread, and start all child threads as needed.
+ *
+ * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add control for dual saver threads.
  */
 

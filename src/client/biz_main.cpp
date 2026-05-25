@@ -233,7 +233,9 @@ typedef void (*biz_exec_func_t)(biz_context_t *, int);
 
 static DECLARE_BIZ_FUN(client_biz)
 {
-    if (ROLE_CLIENT != ctx.conf->role.type)
+    auto &conf = *ctx.conf;
+
+    if (ROLE_CLIENT != conf.role.type)
     {
         LOG_ERROR("*** This is not a client configuration!");
 
@@ -267,7 +269,7 @@ static DECLARE_BIZ_FUN(client_biz)
         return sig_has_happened(SIGTERM) ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
-    int ret = biz_context_construct(ctx.argc, ctx.argv, *ctx.cmd_args, *ctx.conf, ctx);
+    int ret = biz_context_construct(ctx.argc, ctx.argv, *ctx.cmd_args, conf, ctx);
 
     if (ret < 0)
     {
@@ -278,7 +280,6 @@ static DECLARE_BIZ_FUN(client_biz)
         return ret;
     }
 
-    bool enabled_saving = ctx.conf->save.enabled;
     std::vector<std::thread> biz_threads;
     struct
     {
@@ -286,12 +287,12 @@ static DECLARE_BIZ_FUN(client_biz)
         int index;
         bool is_needed;
     } biz_executors[] = {
-        //{ biz_flush, 0, enabled_saving },
-        //{ biz_flush, 1, enabled_saving },
-        { biz_save_video, 0, enabled_saving },
-        { biz_save_video, 1, enabled_saving },
-        //{ biz_save_audio, 0, enabled_saving },
-        //{ biz_save_audio, 1, enabled_saving },
+        //{ biz_flush, 0, conf.save.enabled },
+        //{ biz_flush, 1, (conf.save.enabled && conf.save.has_dual_threads) },
+        { biz_save_video, 0, conf.save.enabled },
+        { biz_save_video, 1, (conf.save.enabled && conf.save.has_dual_threads) },
+        //{ biz_save_audio, 0, conf.save.enabled },
+        //{ biz_save_audio, 1, (conf.save.enabled && conf.save.has_dual_threads) },
         { biz_render, 0, true },
         { biz_receive, 0, true },
     };
@@ -417,5 +418,8 @@ lbl_unload_conf:
  *
  * >>> 2026-04-18, Man Hung-Coeng <udc577@126.com>:
  *  01. Initial commit.
+ *
+ * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add control for dual saver threads.
  */
 
