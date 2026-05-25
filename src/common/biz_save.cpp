@@ -97,16 +97,31 @@ static inline void rename_video_file(uint32_t total_frame_count, float fps, cons
     }
 }
 
+static void set_saver_name(int saver_index, bool has_dual_threads)
+{
+    if (has_dual_threads)
+    {
+        char thread_name[16] = { 0 };
+
+        snprintf(thread_name, sizeof(thread_name) - 1, "lanc/save:v:%d", (saver_index % 2) + 1);
+        SET_THREAD_NAME(thread_name);
+    }
+    else
+    {
+        SET_THREAD_NAME("lanc/save:v");
+    }
+}
+
 #define DISPLAY_RESIZED_IMAGES                  0
 //#define DISPLAY_RESIZED_IMAGES                1
 
 __attribute__((weak))
 void biz_save_video(biz_context_t *ctx, int index)
 {
-    char thread_name[16] = { 0 };
-    const int NEIGHBOR_INDEX = (index + 1) % 2;
     bool is_test = ("test" == ctx->cmd_args->biz);
     const auto &conf = *ctx->conf;
+    bool has_dual_threads = conf.save.has_dual_threads;
+    const int NEIGHBOR_INDEX = has_dual_threads ? ((index + 1) % 2) : 0;
     const auto &model = conf.inference.model;
     const auto &size = DISPLAY_RESIZED_IMAGES ? std::pair<uint16_t, uint16_t>(model.width, model.height)
         : conf.camera.image_sizes[conf.camera.which_size - 1];
@@ -135,8 +150,7 @@ void biz_save_video(biz_context_t *ctx, int index)
     uint8_t buf_idx = 0xff;
     int i = 0;
 
-    snprintf(thread_name, sizeof(thread_name) - 1, "lanc/save:v:%d", (index % 2) + 1);
-    SET_THREAD_NAME(thread_name);
+    set_saver_name(index, has_dual_threads);
 
     if (is_test)
         cost_times.resize(conf.test.capture_duration_secs, {});
@@ -156,7 +170,7 @@ void biz_save_video(biz_context_t *ctx, int index)
         if (ctx->unsaved_count < 1/* in case of spurious wake-up */ || index != ctx->saver_index/* not my task */)
             continue;
 
-        if (--ctx->unsaved_count > 0)
+        if (ctx->unsaved_count-- > conf.save.skip_threshold)
         {
             if (ctx->should_save)
                 ++ctx->skipped_saving_count;
@@ -185,7 +199,7 @@ void biz_save_video(biz_context_t *ctx, int index)
             ++total_frame_count;
             rename_video_file(total_frame_count, fps, size, suffix, path);
             total_frame_count = 0;
-            LOG_INFO("Finished making and renaming/linking video[%s] with %u frames dropped",
+            LOG_INFO("Finished making and renaming video [%s] with %u frames dropped",
                 path.c_str(), ctx->skipped_saving_count - total_dropped_count);
             total_dropped_count = ctx->skipped_saving_count;
         }
@@ -238,7 +252,7 @@ void biz_save_video(biz_context_t *ctx, int index)
     {
         writer.release();
         rename_video_file(total_frame_count, fps, size, suffix, path);
-        LOG_INFO("Finished making and renaming/linking video[%s] with %u frames dropped",
+        LOG_INFO("Finished making and renaming video [%s] with %u frames dropped",
             path.c_str(), ctx->skipped_saving_count - total_dropped_count);
     }
 
@@ -278,5 +292,9 @@ void biz_save_video(biz_context_t *ctx, int index)
  *  02. Rename biz_video_save() to biz_save_video(),
  *      change level of logs of starting and finishing saving a video file,
  *      and fix up date_dir compilation warning and buf_idx updating error.
+ *
+ * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
+ *  01. biz_save_video(): Update thread naming logic,
+ *      and optimize skipping logic for unhandled frames.
  */
 
