@@ -19,6 +19,10 @@
  * >>> V0.1.3|2026-04-28, Man Hung-Coeng <udc577@126.com>:
  *  01. Optimize version control of communication protocol.
  *  02. Optimize program size of release mode.
+ *
+ * >>> V0.1.4|2026-05-25, Man Hung-Coeng <udc577@126.com>:
+ *  01. Optimize image saving logic by adding control for dual saver threads
+ *      and improving skipping logic for unhandled frames.
  */
 
 #ifndef __VERSIONS_H__
@@ -37,7 +41,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       3
+#define PATCH_VER                       4
 #endif
 
 #ifndef __VER__
