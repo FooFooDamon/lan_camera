@@ -32,6 +32,7 @@
 
     "save": {
         "enabled": true,
+        "has_dual_threads": false,
         "dir": "/opt/lan_camera/save",
         "ramfs": {
             "enabled": true,
@@ -40,6 +41,7 @@
         "delays_flushing": false,
         "min_duration_secs": 10,
         "backup_history_days": 90,
+        "skip_threshold": 3,
         "sync": {
             "ip": "0.0.0.0",
             "port": 0,

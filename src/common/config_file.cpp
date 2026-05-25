@@ -240,6 +240,8 @@ static int parse_save_config(const Json::Value &root, const char *part, conf_fil
         obj_name = nullptr;
         item_key = "enabled";
         result.save.enabled = part_obj.get(item_key, (ROLE_SERVER == result.role.type)).asBool();
+        item_key = "has_dual_threads";
+        result.save.has_dual_threads = part_obj.get(item_key, false).asBool();
         item_key = "dir";
         result.save.dir = part_obj.get(item_key, LANC_ROOT_DIR "/save").asString();
         item_key = "delays_flushing";
@@ -248,6 +250,8 @@ static int parse_save_config(const Json::Value &root, const char *part, conf_fil
         result.save.min_duration_secs = part_obj.get(item_key, 10).asUInt();
         item_key = "backup_history_days";
         result.save.backup_history_days = part_obj.get(item_key, 90).asUInt();
+        item_key = "skip_threshold";
+        result.save.skip_threshold = part_obj.get(item_key, 3).asUInt();
 
         obj_name = "ramfs";
         item_key = "";
@@ -279,6 +283,7 @@ static int parse_save_config(const Json::Value &root, const char *part, conf_fil
 
     PRINT_INFO("/%s:", part);
     PRINT_INFO("\tenable: %s", result.save.enabled ? "true" : "false");
+    PRINT_INFO("\thas_dual_threads: %s", result.save.has_dual_threads ? "true" : "false");
     PRINT_INFO("\tdir: %s", result.save.dir.c_str());
     PRINT_INFO("\t%s:", "ramfs");
     PRINT_INFO("\t\tenabled: %s", result.save.ramfs.enabled ? "true" : "false");
@@ -286,6 +291,7 @@ static int parse_save_config(const Json::Value &root, const char *part, conf_fil
     PRINT_INFO("\tdelays_flushing: %s", result.save.delays_flushing ? "true" : "false");
     PRINT_INFO("\tmin_duration_secs: %d", result.save.min_duration_secs);
     PRINT_INFO("\tbackup_history_days: %d", result.save.backup_history_days);
+    PRINT_INFO("\tskip_threshold: %d", result.save.skip_threshold);
     PRINT_INFO("\t%s:", "sync");
     PRINT_INFO("\t\tip: %s", result.save.sync.ip.c_str());
     PRINT_INFO("\t\tport: %d", result.save.sync.port);
@@ -792,5 +798,9 @@ void unload_config_file(conf_file_t &config)
  *
  * >>> 2026-04-21, Man Hung-Coeng <udc577@126.com>:
  *  01. Adjust several default values.
+ *
+ * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
+ *  01. Parse new fields "has_dual_threads" and "skip_threshold"
+ *      in parse_save_config().
  */
 

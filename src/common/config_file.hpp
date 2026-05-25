@@ -71,6 +71,7 @@ typedef struct conf_file
     struct
     {
         bool enabled;
+        bool has_dual_threads;
         bool delays_flushing;
         union
         {
@@ -78,6 +79,7 @@ typedef struct conf_file
             uint8_t min_duration_secs;
         };
         uint8_t backup_history_days;
+        uint8_t skip_threshold;
         struct
         {
             bool enabled;
@@ -166,5 +168,9 @@ void unload_config_file(conf_file_t &result);
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Add a new field "enabled" to conf_file_t::inference.
+ *
+ * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add new fields "has_dual_threads" and "skip_threshold"
+ *      to conf_file_t::save.
  */
 
