@@ -63,6 +63,7 @@ QLANCamera::QLANCamera(struct biz_context *ctx, QWidget *parent/* = nullptr*/)
     this->initCameraTab();
     this->initVideosTab();
     this->initCanvasTab();
+    this->initStatusTab();
     this->initAboutTab();
 
     this->connectSignalsAndSlots();
@@ -70,7 +71,7 @@ QLANCamera::QLANCamera(struct biz_context *ctx, QWidget *parent/* = nullptr*/)
     this->delegatingReloadVideoList();
     this->delegatingResize(size.first, size.second);
     this->setWindowFlags(Qt::Window | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint);
-    this->setWindowTitle(QString::asprintf("%s [v%s]", this->windowTitle().toStdString().c_str(), FULL_VERSION()));
+    //this->setWindowTitle(QString::asprintf("%s [v%s]", this->windowTitle().toStdString().c_str(), FULL_VERSION()));
     m_window_title = this->windowTitle().toStdString();
     this->lblRealtimeInfo->setAlignment(Qt::AlignTop);
 #if 0 // not working
@@ -301,6 +302,11 @@ void QLANCamera::initCanvasTab(void)
 #else // This does not work as expetected.
     this->tabPlayer->setVisible(false);
 #endif
+}
+
+void QLANCamera::initStatusTab(void)
+{
+    this->tabStatus->setAutoFillBackground(true); // The palette settings would not take effect without this.
 }
 
 void QLANCamera::initAboutTab(void)
@@ -749,5 +755,8 @@ void QLANCamera::on_tab_currentChanged(int index)
  *
  * >>> 2026-04-22, Man Hung-Coeng <udc577@126.com>:
  *  01. Add initialization for the new About tab, and refactor the constructor.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initStatusTab().
  */
 

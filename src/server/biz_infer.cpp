@@ -28,6 +28,8 @@ typedef std::shared_ptr<struct inference_resources> inference_resources_ptr_t;
 __attribute__((weak))
 inference_resources_ptr_t prepare_inference_resources(const conf_file_t &conf)
 {
+    LOG_WARNING("%s", "NOT AVAILABLE!!!");
+
     return inference_resources_ptr_t(nullptr);
 }
 
@@ -87,9 +89,12 @@ void biz_infer(biz_context_t *ctx, int index)
         if (ctx->uninferred_count < 1)
             continue;
 
+        buf_idx_to_infer = ctx->buf_index_to_infer;
+
+        ctx->total_inference_count += ((buf_idx_to_infer < 0) ? 0 : 1);
         if (--ctx->uninferred_count > 0)
         {
-            ++ctx->skipped_inference_count;
+            ctx->skipped_inference_count += ((buf_idx_to_infer < 0) ? 0 : 1);
 
             continue;
         }
@@ -102,7 +107,7 @@ void biz_infer(biz_context_t *ctx, int index)
                 ctx->inference_paused = false; // Resize thread becomes busy again.
         }
 
-        if ((buf_idx_to_infer = ctx->buf_index_to_infer) < 0)
+        if (buf_idx_to_infer < 0)
             continue;
 
         if (is_test)
@@ -153,5 +158,9 @@ void biz_infer(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add a warning in prepare_inference_resources().
+ *  02. Add total inference count statistics.
  */
 

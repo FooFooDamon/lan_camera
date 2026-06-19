@@ -360,10 +360,10 @@ void biz_send_image_frames(biz_context_t *ctx, int index)
         if (ctx->unsent_count < 1)
             continue;
 
+        ctx->total_sending_count += (ctx->needs_live_stream ? 1 : 0);
         if (--ctx->unsent_count > 0)
         {
-            if (ctx->needs_live_stream)
-                ++ctx->skipped_sending_count;
+            ctx->skipped_sending_count += (ctx->needs_live_stream ? 1 : 0);
 
             continue;
         }
@@ -478,5 +478,8 @@ void biz_send_image_frames(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
  *  01. Replace global PROTO_VERSION with version() in each protocol body class.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add total sending count statistics.
  */
 

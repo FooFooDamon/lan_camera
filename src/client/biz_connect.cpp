@@ -14,6 +14,7 @@
 #include <arpa/inet.h> // For inet_addr().
 #include <sys/select.h>
 
+#include "versions.h"
 #include "signal_handling.h"
 
 #include "fmt_log.hpp"
@@ -61,6 +62,7 @@ static int send_server_status_request(int fd, const biz_context_t &ctx)
     static thread_local std::vector<unsigned char> s_buf(sizeof(s_header) + sizeof(s_body));
     static thread_local struct sockaddr_in s_server_addr = \
         make_server_address(ctx.conf->network.endpoint.peer_ip.c_str(), ctx.conf->network.endpoint.peer_port);
+    bool cam_tab_activated = (ctx.widget->tab->currentIndex() == ctx.widget->tab->indexOf(ctx.widget->tabCamera));
 
     clock_gettime(CLOCK_MONOTONIC, &s_cur_time);
     s_header.set_once_per_round(REQ_QUERY_SERVER_STATUS, 1, sizeof(s_body), TIMESPEC_TO_SESSION_ID(s_cur_time));
@@ -68,7 +70,7 @@ static int send_server_status_request(int fd, const biz_context_t &ctx)
     COMMPROTO_CPP_SERIALIZE(&s_header, s_buf.data(), sizeof(s_header));
 
     s_body.prefix.set(s_body.version(), 0);
-    s_body.needs_live_stream = ctx.needs_live_stream;
+    s_body.needs_live_stream = (ctx.needs_live_stream && cam_tab_activated && !ctx.widget->isMinimized());
     COMMPROTO_CPP_SERIALIZE(&s_body, s_buf.data() + sizeof(s_header), sizeof(s_body));
 
     return sendto(fd, s_buf.data(), s_buf.size(), 0, (struct sockaddr *)&s_server_addr, sizeof(s_server_addr));
@@ -190,14 +192,64 @@ static int parse_reply(const uint8_t *buf_ptr, int buf_size, packet_head_t &head
     return result.handled_len;
 }
 
-static inline QString make_realtime_info(const biz_context_t *ctx)
+template<typename T1, typename T2>
+static float calculate_loss_rate(T1 loss, T2 total)
 {
-    return QString::asprintf("%u frames dropped during inference\n"
-        "%u frames dropped during saving\n"
-        "%u frames dropped during sending",
-        (uint32_t)ctx->skipped_inference_count,
-        (uint32_t)ctx->skipped_saving_count,
-        (uint32_t)ctx->skipped_sending_count);
+    double loss_num = loss;
+    double total_num = total;
+
+    return total ? (loss_num / total_num) : 0.0;
+}
+
+#define LOSS_STAT_FMT_ARGS(_loss_, _total_)     (_loss_), (_total_), (calculate_loss_rate(_loss_, _total_) * 100)
+
+static void update_status_tab(const reply_0003_query_server_status_t &reply, biz_context_t *ctx)
+{
+    auto &widget = ctx->widget;
+
+    if (widget->isMinimized() || widget->tab->currentIndex() != widget->tab->indexOf(widget->tabStatus))
+        return;
+
+    int64_t uptime = reply.now_msecs / 1000 - ctx->startup_time_secs;
+    int days = uptime / (60 * 60 * 24);
+    int hours = 0;
+    int minutes = 0;
+    int seconds = uptime % 60;
+    int milliseconds = reply.now_msecs % 1000;
+
+    uptime %= (60 * 60 * 24);
+    hours = uptime / (60 * 60);
+    uptime %= (60 * 60);
+    minutes = uptime / 60;
+    widget->txtServerUptime->setText(QString::asprintf("%d days %02d:%02d:%02d.%03d",
+        days, hours, minutes, seconds, milliseconds));
+    widget->txtImageInferenceStat->setText(QString::asprintf("%u / %lu (%.3f%% skipped)",
+        LOSS_STAT_FMT_ARGS(reply.dropped_inference_count, reply.total_inference_count)));
+    widget->txtImageSendingStat->setText(QString::asprintf("%u / %lu (%.3f%% skipped)",
+        LOSS_STAT_FMT_ARGS(reply.dropped_sending_count, reply.total_sending_count)));
+    widget->txtImageSavingFramesStat->setText(QString::asprintf("%u / %lu (%.3f%% lost)",
+        LOSS_STAT_FMT_ARGS(reply.dropped_saving_count, reply.total_saving_count)));
+    widget->txtImageSavingRoundsStat->setText(QString::asprintf("%u / %u (%.3f%% incomplete)",
+        LOSS_STAT_FMT_ARGS(reply.incomplete_saving_rounds, reply.total_saving_rounds)));
+}
+
+static void update_status_tab(const reply_0001_connect_t &reply, biz_context_t *ctx, bool forced = false)
+{
+    auto &widget = ctx->widget;
+
+    if (!forced && (widget->isMinimized() || widget->tab->currentIndex() != widget->tab->indexOf(widget->tabStatus)))
+        return;
+
+    time_t secs = reply.startup_time_secs;
+    struct tm now;
+
+    widget->txtServerVersion->setText(reply.server_version);
+    widget->txtServerName->setText(reply.server_name);
+    widget->txtClientAddress->setText(QString::asprintf("%s:%d", reply.multicast.receiver_ip, reply.multicast.port));
+    widget->txtMulticastAddress->setText(QString::asprintf("%s:%d", reply.multicast.group_ip, reply.multicast.port));
+    localtime_r(&secs, &now);
+    widget->txtServerUptime->setToolTip(QString::asprintf("Since %04d-%02d-%02d %02d:%02d:%02d",
+        now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec));
 }
 
 __attribute__((weak))
@@ -252,6 +304,8 @@ void biz_connect(biz_context_t *ctx, int index)
     endpoint.self_port = multicast.port;
     conf.network.multicast.ip = multicast.group_ip;
     conf.network.multicast.max_payload_size = multicast.max_payload_size;
+    update_status_tab(conn_reply, ctx, /* forced = */true);
+    ctx->startup_time_secs = conn_reply.startup_time_secs;
     ctx->connected_to_server = true;
     LOG_NOTICE("Connection [%s:* -> %s:%d] established, multicast config for live stream is %s:%d",
         endpoint.self_ip.c_str(), endpoint.peer_ip.c_str(), endpoint.peer_port, multicast.group_ip, multicast.port);
@@ -302,12 +356,7 @@ void biz_connect(biz_context_t *ctx, int index)
             }
             ctx->should_save = ctx->inference_positive = status_reply.inference_positive;
 
-            if (!conf.save.enabled)
-                ctx->skipped_saving_count = status_reply.dropped_saving_count;
-            ctx->skipped_sending_count = status_reply.dropped_sending_count;
-            ctx->skipped_inference_count = status_reply.dropped_inference_count;
-            if (!ctx->needs_live_stream)
-                ctx->widget->lblRealtimeInfo->setText(make_realtime_info(ctx));
+            update_status_tab(status_reply, ctx);
 
             continue;
         } // if (REPLY_CONNECT != header.command_code)
@@ -332,6 +381,7 @@ void biz_connect(biz_context_t *ctx, int index)
         conf.network.multicast.ip = multicast.group_ip;
         conf.network.multicast.max_payload_size = multicast.max_payload_size;
         ctx->frame_seq = 0;
+        update_status_tab(conn_reply, ctx);
     } // while (!sig_check_critical_flag())
 
     close(fd);
@@ -348,5 +398,9 @@ void biz_connect(biz_context_t *ctx, int index)
  * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
  *  01. Replace global PROTO_VERSION with version() in each protocol body class.
  *  02. Calculate the minimum size of a connect reply the wiser way.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Refresh the new added Status tab periodically.
+ *  02. Optimize the request for live stream.
  */
 

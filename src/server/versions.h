@@ -69,5 +69,7 @@ extern "C" {
 }
 #endif
 
+extern const char *get_private_revision(void);
+
 #endif /* #ifndef __VERSIONS_H__ */
 

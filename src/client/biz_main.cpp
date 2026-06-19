@@ -11,6 +11,7 @@
 #include <signal.h>
 #include "signal_handling.h"
 #endif
+#include "versions.h"
 #include "communication_protocol.h"
 
 #include <thread>
@@ -118,7 +119,13 @@ static void init_gui(int width, int height, biz_context_t &ctx)
         ctx.app = std::make_shared<QApplication>(ctx.argc, ctx.argv);
 
     if (!ctx.widget)
+    {
         ctx.widget = std::make_shared<QLANCamera>(&ctx);
+        ctx.widget->txtClientVersion->setText(QString::asprintf("v%s_%s_%s",
+            FULL_VERSION(), __COMMON_VER__, get_private_revision()));
+        ctx.widget->txtServerAddress->setText(QString::asprintf("%s:%d",
+            ctx.conf->network.endpoint.peer_ip.c_str(), ctx.conf->network.endpoint.peer_port));
+    }
 }
 
 __attribute__((weak))
@@ -188,7 +195,6 @@ static int biz_context_construct(int argc, char **argv, cmd_args_t &parsed_args,
     memset(&ctx.unflushed_files, 0, sizeof(ctx.unflushed_files));
     ctx.unflushed_info_lock = std::make_shared<std::mutex>();
     // ----
-    ctx.startup_time_secs = 0;
     ctx.frame_seq = 0;
     ctx.total_saving_count = 0;
     ctx.total_sending_count = 0;
@@ -196,6 +202,8 @@ static int biz_context_construct(int argc, char **argv, cmd_args_t &parsed_args,
     ctx.skipped_saving_count = 0;
     ctx.skipped_sending_count = 0;
     ctx.skipped_inference_count = 0;
+    ctx.total_saving_rounds = 0;
+    ctx.incomplete_saving_rounds = 0;
     // ----
     ctx.buf_index_of_latest_frame = 0;
     ctx.buf_index_to_infer = -1;
@@ -346,6 +354,7 @@ static DECLARE_BIZ_FUN(player_biz)
 
     ctx.widget->glwdtCanvas->prepare(ctx.rgb_buffers, ctx); // FIXME: Might be optimized out in future.
     ctx.widget->tab->setTabVisible(ctx.widget->tab->indexOf(ctx.widget->tabCamera), false);
+    ctx.widget->tab->setTabVisible(ctx.widget->tab->indexOf(ctx.widget->tabStatus), false);
     ctx.widget->show();
     ctx.app->exec();
 
@@ -397,6 +406,8 @@ int biz_main(int argc, char **argv)
     if ((ret = register_signals(parsed_args, conf)) < 0)
         goto lbl_finalize_log;
 
+    LOG_NOTICE("Starting LAN Camera Client v%s_%s_%s ...", FULL_VERSION(), __COMMON_VER__, get_private_revision());
+
     if ((ret = biz_context_construct(argc, argv, parsed_args, conf, ctx)) >= 0)
         ret = biz_func(ctx);
 
@@ -421,5 +432,9 @@ lbl_unload_conf:
  *
  * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
  *  01. Add control for dual saver threads.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initialization for image-saving-rounds fields and Status tab.
+ *  02. Print version info on program startup.
  */
 

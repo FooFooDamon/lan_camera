@@ -132,7 +132,8 @@ void biz_save_video(biz_context_t *ctx, int index)
     char video_file[16] = { 0 }; // format: /%02d%02d.mp4
     cv::VideoWriter writer;
     const char *suffix = ".mp4";
-    int fourcc = cv::VideoWriter::fourcc('H'/*'X'*/, '2', '6', '4'/*'m', 'p', '4', 'v'*/);
+    //int fourcc = cv::VideoWriter::fourcc('H'/*'X'*/, '2', '6', '4'/*'m', 'p', '4', 'v'*/);
+    int fourcc = cv::VideoWriter::fourcc('a', 'v', 'c', '1');
     std::string fourcc_str(reinterpret_cast<char *>(&fourcc), 4);
     float fps = -1.0;
     bool is_color_img = (0 != strcasecmp(conf.camera.capture_format.c_str(), "GREY")
@@ -172,8 +173,7 @@ void biz_save_video(biz_context_t *ctx, int index)
 
         if (ctx->unsaved_count-- > conf.save.skip_threshold)
         {
-            if (ctx->should_save)
-                ++ctx->skipped_saving_count;
+            ctx->skipped_saving_count += (ctx->should_save ? 1 : 0);
 
             continue;
         }
@@ -192,16 +192,20 @@ void biz_save_video(biz_context_t *ctx, int index)
 
         if (false == cur_save_flag)
         {
+            uint32_t dropped_count = ctx->skipped_saving_count - total_dropped_count;
+
             ctx->saver_index = NEIGHBOR_INDEX; // Next video processing will be assigned to the other thread.
             add_timestamp(ctx->timestamps[buf_idx], matrixes[buf_idx]);
             writer.write(matrixes[buf_idx]);
             writer.release();
-            ++total_frame_count;
+            ctx->total_saving_count += ++total_frame_count;
             rename_video_file(total_frame_count, fps, size, suffix, path);
             total_frame_count = 0;
-            LOG_INFO("Finished making and renaming video [%s] with %u frames dropped",
-                path.c_str(), ctx->skipped_saving_count - total_dropped_count);
+            LOG_INFO("Finished making video [%s] with %u frames dropped", path.c_str(), dropped_count);
             total_dropped_count = ctx->skipped_saving_count;
+            ++ctx->total_saving_rounds;
+            if (dropped_count > 0)
+                ++ctx->incomplete_saving_rounds;
         }
         else
         {
@@ -252,7 +256,7 @@ void biz_save_video(biz_context_t *ctx, int index)
     {
         writer.release();
         rename_video_file(total_frame_count, fps, size, suffix, path);
-        LOG_INFO("Finished making and renaming video [%s] with %u frames dropped",
+        LOG_INFO("Finished making video [%s] with %u frames dropped",
             path.c_str(), ctx->skipped_saving_count - total_dropped_count);
     }
 
@@ -296,5 +300,9 @@ void biz_save_video(biz_context_t *ctx, int index)
  * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
  *  01. biz_save_video(): Update thread naming logic,
  *      and optimize skipping logic for unhandled frames.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. biz_save_video(): Optimize frame loss statistics,
+ *      and eliminate H264 codec warning.
  */
 

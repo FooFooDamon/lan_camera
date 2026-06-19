@@ -41,6 +41,7 @@ protected:
     void initCameraTab(void);
     void initVideosTab(void);
     void initCanvasTab(void);
+    void initStatusTab(void);
     void initAboutTab(void);
     void connectSignalsAndSlots(void);
 
@@ -94,5 +95,8 @@ private:
  *
  * >>> 2026-04-22, Man Hung-Coeng <udc577@126.com>:
  *  01. Add init*Tab() and connectSignalsAndSlots().
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initStatusTab().
  */
 

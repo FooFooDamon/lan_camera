@@ -14,6 +14,7 @@
 #include <arpa/inet.h> // For inet_addr().
 #include <sys/select.h>
 
+#include "versions.h"
 #include "signal_handling.h"
 
 #include <set>
@@ -112,10 +113,18 @@ static void send_server_status_reply(int fd, const packet_head_t &header,
     s_body.prefix.set(body.prefix.version, return_code);
     if (PROTO_ERR_OK == return_code)
     {
+        const struct timespec &cur_time = ctx.timestamps[ctx.buf_index_of_latest_frame];
+
         s_body.inference_positive = ctx.inference_positive;
         s_body.dropped_saving_count = ctx.skipped_saving_count;
         s_body.dropped_sending_count = ctx.skipped_sending_count;
         s_body.dropped_inference_count = ctx.skipped_inference_count;
+        s_body.total_saving_count = ctx.total_saving_count;
+        s_body.total_sending_count = ctx.total_sending_count;
+        s_body.total_inference_count = ctx.total_inference_count;
+        s_body.total_saving_rounds = ctx.total_saving_rounds;
+        s_body.incomplete_saving_rounds = ctx.incomplete_saving_rounds;
+        s_body.now_msecs = cur_time.tv_sec * 1000 + cur_time.tv_nsec / 1000000;
     }
     COMMPROTO_CPP_SERIALIZE(&s_body, s_buf.data() + sizeof(s_header), sizeof(s_body));
 
@@ -164,6 +173,10 @@ static void send_connect_reply(int fd, const packet_head_t &header,
         inet_ntop(AF_INET, &client_addr.sin_addr, s_body.multicast.receiver_ip, sizeof(s_body.multicast.receiver_ip));
         s_body.multicast.port = conf.network.multicast.port;
         s_body.multicast.max_payload_size = conf.network.multicast.max_payload_size;
+        s_body.startup_time_secs = ctx.startup_time_secs;
+        strncpy(s_body.server_name, conf.role.name.c_str(), sizeof(s_body.server_name) - 1);
+        snprintf(s_body.server_version, sizeof(s_body.server_version), "v%s_%s_%s",
+            FULL_VERSION(), __COMMON_VER__, get_private_revision());
     }
     COMMPROTO_CPP_SERIALIZE(&s_body, s_buf.data() + sizeof(s_header), sizeof(s_body));
 
@@ -322,5 +335,9 @@ void biz_listen(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add startup timestamp, server name/version to each connect reply.
+ *  02. Add current timestamp, total x count statistics to each status reply.
  */
 

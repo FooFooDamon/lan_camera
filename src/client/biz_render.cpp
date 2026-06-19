@@ -27,9 +27,10 @@ static inline QString make_realtime_info(const biz_context_t *ctx,
 {
     static struct tm s_now;
     const int MAX_STAT_STRLEN = 63;
-    static char s_infer_stat[MAX_STAT_STRLEN + 1] = {};
-    static char s_save_stat[MAX_STAT_STRLEN + 1] = {};
-    static char s_send_stat[MAX_STAT_STRLEN + 1] = {};
+    static thread_local char s_infer_stat[MAX_STAT_STRLEN + 1] = {};
+    static thread_local char s_save_stat[MAX_STAT_STRLEN + 1] = {};
+    static thread_local char s_send_stat[MAX_STAT_STRLEN + 1] = {};
+#if 0
     static struct
     {
         const char *name;
@@ -41,8 +42,6 @@ static inline QString make_realtime_info(const biz_context_t *ctx,
         { "saving", ctx->skipped_saving_count, ctx->skipped_saving_count, s_save_stat },
         { "sending", ctx->skipped_sending_count, ctx->skipped_sending_count, s_send_stat },
     };
-
-    localtime_r(&cur_time.tv_sec, &s_now);
 
     for (auto &item : s_stat_items)
     {
@@ -60,6 +59,9 @@ static inline QString make_realtime_info(const biz_context_t *ctx,
                 (uint32_t)item.cur_value, item.name);
         }
     }
+#endif
+
+    localtime_r(&cur_time.tv_sec, &s_now);
 
     return QString::asprintf("%04d-%02d-%02d %02d:%02d:%02d.%03ld | %.1f fps%s%s%s",
         s_now.tm_year + 1900, s_now.tm_mon + 1, s_now.tm_mday, s_now.tm_hour, s_now.tm_min, s_now.tm_sec,
@@ -104,10 +106,14 @@ void biz_render(biz_context_t *ctx, int index)
         else
             last_buf_idx = cur_buf_idx;
 
+        bool tab_activated = (ctx->widget->tab->currentIndex() == ctx->widget->tab->indexOf(ctx->widget->tabCamera));
+        bool should_render = (ctx->needs_live_stream && tab_activated && !ctx->widget->isMinimized());
+
         if (stat_samples > 0)
             clock_gettime(CLOCK_MONOTONIC, &start_time);
 
-        ctx->widget->glwdtCanvas->render(cur_buf_idx);
+        if (should_render)
+            ctx->widget->glwdtCanvas->render(cur_buf_idx);
 
         clock_gettime(CLOCK_MONOTONIC, &end_time);
         frame_interval = subtract_timespec(end_time, last_frame_time);
@@ -116,7 +122,8 @@ void biz_render(biz_context_t *ctx, int index)
             cost_times[i++ % stat_samples] = subtract_timespec(end_time, start_time);
 
         cur_time = ctx->timestamps[cur_buf_idx];
-        ctx->widget->lblRealtimeInfo->setText(make_realtime_info(ctx, cur_time, frame_interval));
+        if (should_render)
+            ctx->widget->lblRealtimeInfo->setText(make_realtime_info(ctx, cur_time, frame_interval));
     } // while (true)
 
     ctx->widget->delegatingClose();
@@ -141,5 +148,9 @@ void biz_render(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Remove statistics info in the upper-left area of the screen.
+ *  02. Do rendering only if it is really needed.
  */
 

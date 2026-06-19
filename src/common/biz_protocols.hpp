@@ -292,8 +292,10 @@ typedef struct reply_0001_connect //! Connect Reply
     uint16_t camera_buf_count; //!> | camera buffer count |
     struct multicast_config multicast; //!> | multicast config | See \ref{multicast_config}
     uint64_t startup_time_secs; //!> | startup time in seconds |
+    char server_name[32]; //!> | server name | Since V1.0.1
+    char server_version[64]; //!> | server version | Since V1.0.1
 
-    DEFINE_PROTO_VERSION_FUNC(0x01000000);
+    DEFINE_PROTO_VERSION_FUNC(0x01000001);
 
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
@@ -306,6 +308,8 @@ typedef struct reply_0001_connect //! Connect Reply
             COMMPROTO_INT16, // port
             COMMPROTO_INT16, // max_payload_size
         COMMPROTO_INT64, // startup_time_secs
+        COMMPROTO_INT8_FIXED_ARRAY, COMMPROTO_ARRAY_LEN_IS(32), // server_name
+        COMMPROTO_INT8_FIXED_ARRAY, COMMPROTO_ARRAY_LEN_IS(64), // server_version
     };
 
     COMMPROTO_DEFINE_META_FUNCTIONS_IN_STRUCT();
@@ -340,8 +344,11 @@ typedef struct reply_0003_query_server_status //! Query Server Status Reply
     uint64_t total_saving_count; //!> | total saving count |
     uint64_t total_sending_count; //!> | total sending count |
     uint64_t total_inference_count; //!> | total inference count |
+    uint32_t total_saving_rounds; //!> | total saving rounds | Since V1.0.1
+    uint32_t incomplete_saving_rounds; //!> | incomplete saving rounds | Since V1.0.1
+    uint64_t now_msecs; //!> | current time in milliseconds | Since V1.0.1
 
-    DEFINE_PROTO_VERSION_FUNC(0x01000000);
+    DEFINE_PROTO_VERSION_FUNC(0x01000001);
 
     COMMPROTO_META_VAR_IN_STRUCT = {
         PKT_BODY_PREFIX_META_VARS, // prefix
@@ -352,6 +359,9 @@ typedef struct reply_0003_query_server_status //! Query Server Status Reply
         COMMPROTO_INT64, // total_saving_count
         COMMPROTO_INT64, // total_sending_count
         COMMPROTO_INT64, // total_inference_count
+        COMMPROTO_INT32, // total_saving_rounds
+        COMMPROTO_INT32, // incomplete_saving_rounds
+        COMMPROTO_INT64, // now_msecs
     };
 
     COMMPROTO_DEFINE_META_FUNCTIONS_IN_STRUCT();
@@ -440,5 +450,9 @@ typedef struct reply_0005_live_stream //! Live Stream Reply
  * >>> 2026-04-26, Man Hung-Coeng <udc577@126.com>:
  *  01. Replace global PROTO_VERSION with version() in each protocol body class.
  *  02. Add macro PROTO_FIELD_OFFSET().
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add server_name and server_version to reply_0001_connect_t.
+ *  02. Add *_saving_rounds and now_msecs to reply_0003_query_server_status_t.
  */
 

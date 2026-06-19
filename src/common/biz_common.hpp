@@ -68,6 +68,8 @@ typedef struct biz_context
     std::atomic<uint32_t> skipped_saving_count;
     std::atomic<uint32_t> skipped_sending_count;
     std::atomic<uint32_t> skipped_inference_count;
+    std::atomic<uint32_t> total_saving_rounds;
+    std::atomic<uint32_t> incomplete_saving_rounds;
     // ----
     std::atomic_uint_fast8_t buf_index_of_latest_frame;
     std::atomic_int_fast8_t buf_index_to_infer;
@@ -111,6 +113,15 @@ inline struct timespec subtract_timespec(const struct timespec &l, const struct 
     return result;
 }
 
+inline struct timespec get_current_time(clockid_t clk_id = CLOCK_REALTIME)
+{
+    struct timespec cur_time;
+
+    clock_gettime(clk_id, &cur_time);
+
+    return cur_time;
+}
+
 #endif /* #ifndef __BIZ_COMMON_HPP__ */
 
 /*
@@ -131,5 +142,9 @@ inline struct timespec subtract_timespec(const struct timespec &l, const struct 
  *      (3) Add volatile modifier to raw_buf_size, startup_time_secs
  *          and fields within struct type of unflushed_files.
  *  03. Remove the index parameter from macro BIZ_FUN_ARG_LIST.
+ *
+ * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add *_saving_rounds fields to biz_context_t.
+ *  02. Add get_current_time().
  */
 
