@@ -23,6 +23,14 @@
  * >>> V0.1.4|2026-05-25, Man Hung-Coeng <udc577@126.com>:
  *  01. Optimize image saving logic by adding control for dual saver threads
  *      and improving skipping logic for unhandled frames.
+ *
+ * >>> V0.1.5|2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Improve image inference/sending/saving statistics, and provide
+ *      more info such as version, network address, startup/current time, etc.
+ *  02. Eliminate H264 codec warning.
+ *  03. Add a warning for default implementation of
+ *      inference resources preparation.
+ *  04. Print version info on program startup.
  */
 
 #ifndef __VERSIONS_H__
@@ -41,7 +49,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       4
+#define PATCH_VER                       5
 #endif
 
 #ifndef __VER__

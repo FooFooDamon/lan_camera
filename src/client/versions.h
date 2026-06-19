@@ -22,6 +22,13 @@
  * >>> V0.1.4|2026-05-25, Man Hung-Coeng <udc577@126.com>:
  *  01. Optimize image saving logic by adding control for dual saver threads
  *      and improving skipping logic for unhandled frames.
+ *
+ * >>> V0.1.5|2026-06-19, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add Status tab.
+ *  02. Optimize the request for live stream.
+ *  03. Optimize the real-time image rendering frequency.
+ *  04. Eliminate the H264 codec warning.
+ *  05. Print version info on program startup.
  */
 
 #ifndef __VERSIONS_H__
@@ -40,7 +47,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       4
+#define PATCH_VER                       5
 #endif
 
 #ifndef __VER__
