@@ -124,6 +124,28 @@
         "spacing_frame_count": 4
     },
 
+    "schedule": {
+        "cpu_affinity": {
+            "lanc/capture:v": [ -1 ],
+            "lanc/send:v": [ -1 ],
+            "lanc/send:a": [ -1 ],
+            "lanc/save:v": [ -1 ],
+            "lanc/save:a": [ -1 ],
+            "lanc/resize": [ -1 ],
+            "lanc/infer": [ -1 ]
+        },
+        "nice_level": {
+            "lanc/capture:v": -15,
+            "lanc/send:v": -10,
+            "lanc/send:a": -10,
+            "lanc/save:v": -15,
+            "lanc/save:a": -15,
+            "lanc/resize": -10,
+            "lanc/infer": -19
+        },
+        "cv_backend_thread_count": -1
+    },
+
     "test": {
         "capture_duration_secs": 20
     }

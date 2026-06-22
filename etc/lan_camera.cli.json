@@ -61,6 +61,24 @@
             "version": "460 core",
             "profile": "core"
         }
+    },
+
+    "schedule": {
+        "cpu_affinity": {
+            "lanc/recv:v": [ -1 ],
+            "lanc/recv:a": [ -1 ],
+            "lanc/render": [ -1 ],
+            "lanc/save:v": [ -1 ],
+            "lanc/save:a": [ -1 ]
+        },
+        "nice_level": {
+            "lanc/recv:v": -10,
+            "lanc/recv:a": -10,
+            "lanc/render": -5,
+            "lanc/save:v": -10,
+            "lanc/save:a": -10
+        },
+        "cv_backend_thread_count": -1
     }
 }
 
