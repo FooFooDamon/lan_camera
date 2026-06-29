@@ -4,4 +4,6 @@ alias lanc_client.sh='time bash /opt/lan_camera/scripts/lanc_client.sh'
 alias lanc_server.sh='time bash /opt/lan_camera/scripts/lanc_server.sh'
 alias test_lanc_client.sh='time bash /opt/lan_camera/scripts/test_lanc_client.sh'
 alias test_lanc_server.sh='time bash /opt/lan_camera/scripts/test_lanc_server.sh'
+alias renice_lanc_server='bash /opt/lan_camera/scripts/renice_lanc_threads.sh ~/etc/lan_camera.srv.json'
+alias renice_lanc_client='bash /opt/lan_camera/scripts/renice_lanc_threads.sh ~/etc/lan_camera.cli.json'
 
