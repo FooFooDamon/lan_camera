@@ -649,6 +649,94 @@ static int parse_inference_config(const Json::Value &root, const char *part, con
     return 0;
 }
 
+static int parse_schedule_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
+{
+    const Json::Value &part_obj = root[part];
+    const Json::Value &obj_cpu_affinity = part_obj["cpu_affinity"];
+    const Json::Value &obj_nice_level = part_obj["nice_level"];
+    const char *obj_name;
+    std::string item_key;
+
+    try
+    {
+        obj_name = "cpu_affinity";
+        item_key = "";
+        ASSERT_JSON_TYPE(obj_cpu_affinity, Object);
+        result.schedule.cpu_affinity.clear();
+        for (const auto &key : obj_cpu_affinity.getMemberNames())
+        {
+            const Json::Value &arr_cpu_affinity = obj_cpu_affinity[key];
+
+            item_key = key;
+            ASSERT_JSON_TYPE(arr_cpu_affinity, Array);
+            result.schedule.cpu_affinity[key] = {};
+            for (const auto &aff : arr_cpu_affinity)
+            {
+                result.schedule.cpu_affinity[key].push_back(aff.asInt());
+            }
+        }
+
+        obj_name = "nice_level";
+        item_key = "";
+        ASSERT_JSON_TYPE(obj_nice_level, Object);
+        result.schedule.nice_level.clear();
+        for (const auto &key : obj_nice_level.getMemberNames())
+        {
+            item_key = key;
+            result.schedule.nice_level[key] = obj_nice_level.get(key, 0).asInt();
+        }
+    }
+    catch (const Json::Exception &e)
+    {
+        PRINT_ERROR("/%s: Failed to parse [%s%s%s]: %s",
+            part, (obj_name ? obj_name : ""), (obj_name ? "/" : ""), item_key.c_str(), e.what());
+
+        return -1;
+    }
+
+    try
+    {
+        obj_name = nullptr;
+        item_key = "cv_backend_thread_count";
+        result.schedule.cv_backend_thread_count = part_obj.get(item_key, -1).asInt();
+    }
+    catch (const Json::Exception &e)
+    {
+        PRINT_ERROR("/%s: Failed to parse [%s%s%s]: %s",
+            part, (obj_name ? obj_name : ""), (obj_name ? "/" : ""), item_key.c_str(), e.what());
+
+        return -1;
+    }
+
+    PRINT_INFO("/%s:", part);
+    PRINT_INFO("\t%s:", "cpu_affinity");
+    for (const auto &aff : result.schedule.cpu_affinity)
+    {
+        char buf[16] = { 0 };
+        std::string str;
+
+        for (auto i : aff.second)
+        {
+            snprintf(buf, sizeof(buf), "%d", i);
+            str.append(str.empty() ? "[ " : ", ").append(buf);
+        }
+        if (str.empty())
+            str = "[ ]";
+        else
+            str += " ]";
+
+        PRINT_INFO("\t\t%s: %s", aff.first.c_str(), str.c_str());
+    }
+    PRINT_INFO("\t%s:", "nice_level");
+    for (const auto &ni : result.schedule.nice_level)
+    {
+        PRINT_INFO("\t\t%s: %d", ni.first.c_str(), ni.second);
+    }
+    PRINT_INFO("\tcv_backend_thread_count: %d", result.schedule.cv_backend_thread_count);
+
+    return 0;
+}
+
 static int parse_test_config(const Json::Value &root, const char *part, conf_file_t &result, bool debug)
 {
     if (ROLE_SERVER != result.role.type)
@@ -728,6 +816,7 @@ int load_config_file(const char *path, conf_file_t &result, bool debug/* = true 
         { "camera", parse_camera_config, ROLE_SERVER },
         { "player", parse_player_config, ROLE_CLIENT },
         { "inference", parse_inference_config, ROLE_SERVER },
+        { "schedule", parse_schedule_config, ROLE_FOR_ALL },
         { "test", parse_test_config, ROLE_SERVER },
         { "priv", parse_private_config, ROLE_FOR_ALL }
     };
@@ -802,5 +891,8 @@ void unload_config_file(conf_file_t &config)
  * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
  *  01. Parse new fields "has_dual_threads" and "skip_threshold"
  *      in parse_save_config().
+ *
+ * >>> 2026-06-29, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add parse_schedule_config().
  */
 

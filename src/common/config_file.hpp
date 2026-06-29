@@ -144,6 +144,12 @@ typedef struct conf_file
     } inference;
     struct
     {
+        std::map<std::string, std::vector<int16_t>> cpu_affinity;
+        std::map<std::string, int8_t> nice_level;
+        int8_t cv_backend_thread_count;
+    } schedule;
+    struct
+    {
         uint16_t capture_duration_secs;
     } test;
     std::shared_ptr<struct priv_config> priv;
@@ -172,5 +178,8 @@ void unload_config_file(conf_file_t &result);
  * >>> 2026-05-25, Man Hung-Coeng <udc577@126.com>:
  *  01. Add new fields "has_dual_threads" and "skip_threshold"
  *      to conf_file_t::save.
+ *
+ * >>> 2026-06-29, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add struct schedule to conf_file_t.
  */
 
