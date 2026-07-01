@@ -103,6 +103,12 @@ typedef int (*biz_func_t)(BIZ_FUN_ARG_LIST);
 #define BIZ_POLL_TIMEOUT_MSECS          500
 #endif
 
+#ifndef BIZ_WAIT_UNLESS_INTERRUPTED
+#define BIZ_WAIT_UNLESS_INTERRUPTED()   do { \
+    usleep(BIZ_POLL_TIMEOUT_MSECS * 1000); \
+} while (!sig_check_critical_flag())
+#endif
+
 inline struct timespec subtract_timespec(const struct timespec &l, const struct timespec &r)
 {
     struct timespec result;
@@ -146,5 +152,8 @@ inline struct timespec get_current_time(clockid_t clk_id = CLOCK_REALTIME)
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Add *_saving_rounds fields to biz_context_t.
  *  02. Add get_current_time().
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add BIZ_WAIT_UNLESS_INTERRUPTED().
  */
 
