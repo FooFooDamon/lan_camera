@@ -149,8 +149,10 @@ src/client/biz_protocols.cpp
 src/client/biz_save.cpp
 src/client/cmdline_args.cpp
 src/client/config_file.cpp
+src/client/thread_settings.cpp
 src/server/biz_protocols.cpp
 src/server/biz_save.cpp
 src/server/cmdline_args.cpp
 src/server/config_file.cpp
+src/server/thread_settings.cpp
 
