@@ -20,6 +20,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "camera_v4l2.h"
 
@@ -248,7 +249,7 @@ void biz_capture_image_frames(biz_context_t *ctx, int index)
         : conf.camera.io_modes.data();
     camera_v4l2_t cam = camera_v4l2(conf.logger.level.c_str());
 
-    SET_THREAD_NAME("lanc/capture:v");
+    DO_BIZ_THREAD_SETTINGS(conf, "lanc/capture:v");
 
     if (cam.open(&cam, conf.camera.device.c_str(), /* is_nonblocking = */false) < 0
         || cam.query_capabilities(&cam, /* with_validation = */true) < 0
@@ -359,5 +360,8 @@ void biz_capture_image_frames(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-20, Man Hung-Coeng <udc577@126.com>:
  *  01. Rename biz_capture_image() to biz_capture_image_frames().
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for capture thread.
  */
 

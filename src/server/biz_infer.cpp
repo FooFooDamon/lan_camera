@@ -20,6 +20,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 
 struct inference_resources;
@@ -50,7 +51,7 @@ int do_inference(biz_context_t *ctx, inference_resources_ptr_t &res, int img_buf
 __attribute__((weak))
 void biz_infer(biz_context_t *ctx, int index)
 {
-    SET_THREAD_NAME("lanc/infer");
+    DO_BIZ_THREAD_SETTINGS(*ctx->conf, "lanc/infer");
 
     bool is_test = ("test" == ctx->cmd_args->biz);
     const auto &conf = *ctx->conf;
@@ -162,5 +163,8 @@ void biz_infer(biz_context_t *ctx, int index)
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Add a warning in prepare_inference_resources().
  *  02. Add total inference count statistics.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for infer thread.
  */
 

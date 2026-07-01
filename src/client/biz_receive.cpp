@@ -21,6 +21,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "biz_protocols.hpp"
 
@@ -37,7 +38,7 @@ static inline bool is_multicast_address(uint32_t addr)
 __attribute__((weak))
 void biz_receive(biz_context_t *ctx, int index)
 {
-    SET_THREAD_NAME("lanc/recv");
+    DO_BIZ_THREAD_SETTINGS(*ctx->conf, "lanc/recv");
 
     int fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 
@@ -248,5 +249,8 @@ void biz_receive(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for receive thread.
  */
 

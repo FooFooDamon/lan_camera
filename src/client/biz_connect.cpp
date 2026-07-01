@@ -19,6 +19,7 @@
 
 #include "fmt_log.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "biz_protocols.hpp"
 #include "QLANCamera.hpp"
@@ -233,13 +234,9 @@ static void update_status_tab(const reply_0003_query_server_status_t &reply, biz
         LOSS_STAT_FMT_ARGS(reply.incomplete_saving_rounds, reply.total_saving_rounds)));
 }
 
-static void update_status_tab(const reply_0001_connect_t &reply, biz_context_t *ctx, bool forced = false)
+static void update_status_tab(const reply_0001_connect_t &reply, biz_context_t *ctx)
 {
     auto &widget = ctx->widget;
-
-    if (!forced && (widget->isMinimized() || widget->tab->currentIndex() != widget->tab->indexOf(widget->tabStatus)))
-        return;
-
     time_t secs = reply.startup_time_secs;
     struct tm now;
 
@@ -248,6 +245,7 @@ static void update_status_tab(const reply_0001_connect_t &reply, biz_context_t *
     widget->txtClientAddress->setText(QString::asprintf("%s:%d", reply.multicast.receiver_ip, reply.multicast.port));
     widget->txtMulticastAddress->setText(QString::asprintf("%s:%d", reply.multicast.group_ip, reply.multicast.port));
     localtime_r(&secs, &now);
+    ctx->startup_time_secs = secs;
     widget->txtServerUptime->setToolTip(QString::asprintf("Since %04d-%02d-%02d %02d:%02d:%02d",
         now.tm_year + 1900, now.tm_mon + 1, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec));
 }
@@ -255,7 +253,7 @@ static void update_status_tab(const reply_0001_connect_t &reply, biz_context_t *
 __attribute__((weak))
 void biz_connect(biz_context_t *ctx, int index)
 {
-    SET_THREAD_NAME("lanc/connect");
+    DO_BIZ_THREAD_SETTINGS(*ctx->conf, "lanc/connect");
 
     int fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 
@@ -304,7 +302,7 @@ void biz_connect(biz_context_t *ctx, int index)
     endpoint.self_port = multicast.port;
     conf.network.multicast.ip = multicast.group_ip;
     conf.network.multicast.max_payload_size = multicast.max_payload_size;
-    update_status_tab(conn_reply, ctx, /* forced = */true);
+    update_status_tab(conn_reply, ctx);
     ctx->startup_time_secs = conn_reply.startup_time_secs;
     ctx->connected_to_server = true;
     LOG_NOTICE("Connection [%s:* -> %s:%d] established, multicast config for live stream is %s:%d",
@@ -402,5 +400,10 @@ void biz_connect(biz_context_t *ctx, int index)
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Refresh the new added Status tab periodically.
  *  02. Optimize the request for live stream.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Fix the bug of Status tab unable to update the uptime of rebooted server
+ *      during runtime.
+ *  02. Add support for setting nice level and CPU affinity for connect thread.
  */
 

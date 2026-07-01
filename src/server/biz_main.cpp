@@ -20,6 +20,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 
 static int show_available_capture_sizes(const conf_file_t &conf)
@@ -244,6 +245,8 @@ static DECLARE_BIZ_FUN(server_biz)
         //{ biz_listen, 0, true },
     };
 
+    DO_ROOT_THREAD_SETTINGS(*ctx.conf);
+
     //biz_threads.reserve(sizeof(biz_executors) / sizeof(biz_executors[0])); // no help for preventing crash
     for (size_t i = 0; i < sizeof(biz_executors) / sizeof(biz_executors[0]); ++i)
     {
@@ -257,7 +260,10 @@ static DECLARE_BIZ_FUN(server_biz)
         }
     }
 
-    biz_listen(&ctx, 0); // There's a loop within it.
+    if (biz_listen == biz_executors[sizeof(biz_executors) / sizeof(biz_executors[0]) - 1].func)
+        BIZ_WAIT_UNLESS_INTERRUPTED();
+    else
+        biz_listen(&ctx, 0); // There's a loop within it.
 
     raise(SIGURG); // Interrupt select() in child threads. This raised signal MUST NOT be registered!
 
@@ -348,5 +354,8 @@ lbl_unload_conf:
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Add initialization for startup time and image-saving-rounds fields.
  *  02. Print version info on program startup.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initialization for CV backend thread pool prior to all subthreads.
  */
 

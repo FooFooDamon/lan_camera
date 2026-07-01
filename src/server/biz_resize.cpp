@@ -15,6 +15,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 
 __attribute__((weak))
@@ -37,7 +38,7 @@ void biz_resize(biz_context_t *ctx, int index)
     int8_t idx_to_infer = -1;
     int i = 0;
 
-    SET_THREAD_NAME("lanc/resize");
+    DO_BIZ_THREAD_SETTINGS(conf, "lanc/resize");
 
     if (is_test)
         cost_times.resize(conf.test.capture_duration_secs, {});
@@ -125,5 +126,8 @@ void biz_resize(biz_context_t *ctx, int index)
  *
  * >>> 2026-04-10, Man Hung-Coeng <udc577@126.com>:
  *  01. Ported from another private personal project.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for resize thread.
  */
 

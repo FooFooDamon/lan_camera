@@ -14,6 +14,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "QLANCamera.hpp"
 
@@ -71,7 +72,7 @@ static inline QString make_realtime_info(const biz_context_t *ctx,
 __attribute__((weak))
 void biz_render(biz_context_t *ctx, int index)
 {
-    SET_THREAD_NAME("lanc/render");
+    DO_BIZ_THREAD_SETTINGS(*ctx->conf, "lanc/render");
 
     struct timespec start_time;
     struct timespec end_time;
@@ -152,5 +153,8 @@ void biz_render(biz_context_t *ctx, int index)
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Remove statistics info in the upper-left area of the screen.
  *  02. Do rendering only if it is really needed.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for render thread.
  */
 

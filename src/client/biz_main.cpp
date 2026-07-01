@@ -20,6 +20,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "qt_print.hpp"
 #include "QLANCamera.hpp"
@@ -259,6 +260,8 @@ static DECLARE_BIZ_FUN(client_biz)
         return -1;
     }
 
+    DO_ROOT_THREAD_SETTINGS(conf);
+
     std::thread conn_thread([&](){
         biz_connect(&ctx, 0);
     });
@@ -436,5 +439,8 @@ lbl_unload_conf:
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Add initialization for image-saving-rounds fields and Status tab.
  *  02. Print version info on program startup.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initialization for CV backend thread pool prior to all subthreads.
  */
 

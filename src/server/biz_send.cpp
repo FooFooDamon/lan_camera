@@ -28,6 +28,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "biz_protocols.hpp"
 
@@ -248,7 +249,7 @@ lbl_sendmsg_poll:
 __attribute__((weak))
 void biz_send_image_frames(biz_context_t *ctx, int index)
 {
-    SET_THREAD_NAME("lanc/send:v");
+    DO_BIZ_THREAD_SETTINGS(*ctx->conf, "lanc/send:v");
 
     do
     {
@@ -481,5 +482,8 @@ void biz_send_image_frames(biz_context_t *ctx, int index)
  *
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Add total sending count statistics.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for send thread.
  */
 

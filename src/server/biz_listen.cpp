@@ -22,6 +22,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 #include "biz_protocols.hpp"
 
@@ -189,7 +190,7 @@ void biz_listen(biz_context_t *ctx, int index)
 {
     int fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 
-    SET_THREAD_NAME("lanc/listen");
+    DO_BIZ_THREAD_SETTINGS(*ctx->conf, "lanc/listen");
 
     if (fd < 0)
     {
@@ -339,5 +340,8 @@ void biz_listen(biz_context_t *ctx, int index)
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. Add startup timestamp, server name/version to each connect reply.
  *  02. Add current timestamp, total x count statistics to each status reply.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for listen thread.
  */
 

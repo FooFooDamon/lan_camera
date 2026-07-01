@@ -19,6 +19,7 @@
 #include "fmt_log.hpp"
 #include "cmdline_args.hpp"
 #include "config_file.hpp"
+#include "thread_settings.hpp"
 #include "biz_common.hpp"
 
 static const cv::String S_FONT_EXAMPLE = "2026-04-01 00:00:00.123";
@@ -97,19 +98,16 @@ static inline void rename_video_file(uint32_t total_frame_count, float fps, cons
     }
 }
 
-static void set_saver_name(int saver_index, bool has_dual_threads)
+static std::string make_thread_name(int saver_index, bool has_dual_threads)
 {
-    if (has_dual_threads)
-    {
-        char thread_name[16] = { 0 };
+    if (!has_dual_threads)
+        return "lanc/save:v";
 
-        snprintf(thread_name, sizeof(thread_name) - 1, "lanc/save:v:%d", (saver_index % 2) + 1);
-        SET_THREAD_NAME(thread_name);
-    }
-    else
-    {
-        SET_THREAD_NAME("lanc/save:v");
-    }
+    char thread_name[16] = { 0 };
+
+    snprintf(thread_name, sizeof(thread_name), "lanc/save:v:%d", (saver_index % 2) + 1);
+
+    return thread_name;
 }
 
 #define DISPLAY_RESIZED_IMAGES                  0
@@ -122,6 +120,7 @@ void biz_save_video(biz_context_t *ctx, int index)
     const auto &conf = *ctx->conf;
     bool has_dual_threads = conf.save.has_dual_threads;
     const int NEIGHBOR_INDEX = has_dual_threads ? ((index + 1) % 2) : 0;
+    std::string saver_name = make_thread_name(index, has_dual_threads);
     const auto &model = conf.inference.model;
     const auto &size = DISPLAY_RESIZED_IMAGES ? std::pair<uint16_t, uint16_t>(model.width, model.height)
         : conf.camera.image_sizes[conf.camera.which_size - 1];
@@ -151,7 +150,7 @@ void biz_save_video(biz_context_t *ctx, int index)
     uint8_t buf_idx = 0xff;
     int i = 0;
 
-    set_saver_name(index, has_dual_threads);
+    DO_BIZ_THREAD_SETTINGS(conf, saver_name.c_str());
 
     if (is_test)
         cost_times.resize(conf.test.capture_duration_secs, {});
@@ -304,5 +303,8 @@ void biz_save_video(biz_context_t *ctx, int index)
  * >>> 2026-06-19, Man Hung-Coeng <udc577@126.com>:
  *  01. biz_save_video(): Optimize frame loss statistics,
  *      and eliminate H264 codec warning.
+ *
+ * >>> 2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add support for setting nice level and CPU affinity for save thread.
  */
 
