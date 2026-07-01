@@ -19,7 +19,7 @@ PREREQUISITE_FILES := ${LAZY_CODING_URL}/raw/main/makefiles/__ver__.mk \
     ${LAZY_CODING_URL}/raw/1967505fc56bce02022d7e896554e5c406c2c57b/c_and_cpp/qt/QVideoCanvas.hpp \
 
 override COMMON_C_SRCS := signal_handling.c communication_protocol.c
-override COMMON_CXX_SRCS := cmdline_args.cpp config_file.cpp biz_protocols.cpp biz_save.cpp
+override COMMON_CXX_SRCS := cmdline_args.cpp config_file.cpp biz_protocols.cpp biz_save.cpp thread_settings.cpp
 
 ifeq ($(shell [ -s QtMakefile $(foreach i, $(notdir ${PREREQUISITE_FILES}) ${COMMON_C_SRCS} ${COMMON_CXX_SRCS}, -a -s ${i}) ] && echo 1 || echo 0),0)
 

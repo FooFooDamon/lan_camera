@@ -36,7 +36,7 @@ else
 all: dependencies
 
 COMMON_C_SRCS ?= ./signal_handling.c ./communication_protocol.c
-COMMON_CXX_SRCS ?= ./cmdline_args.cpp ./config_file.cpp ./biz_protocols.cpp ./biz_save.cpp
+COMMON_CXX_SRCS ?= ./cmdline_args.cpp ./config_file.cpp ./biz_protocols.cpp ./biz_save.cpp ./thread_settings.cpp
 
 C_SRCS := $(shell find ./ -name "*.c" | grep -v '\.priv\.c$$')
 C_SRCS := $(sort ${C_SRCS} ${COMMON_C_SRCS})
