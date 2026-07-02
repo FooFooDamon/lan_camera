@@ -29,6 +29,12 @@
  *  03. Optimize the real-time image rendering frequency.
  *  04. Eliminate the H264 codec warning.
  *  05. Print version info on program startup.
+ *
+ * >>> V0.1.6|2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initialization for CV backend thread pool for main thread.
+ *  02. Add support for setting nice level and CPU affinity for biz threads.
+ *  03. Fix the bug of Status tab unable to update the uptime of rebooted server
+ *      during runtime.
  */
 
 #ifndef __VERSIONS_H__
@@ -47,7 +53,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       5
+#define PATCH_VER                       6
 #endif
 
 #ifndef __VER__

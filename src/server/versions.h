@@ -31,6 +31,10 @@
  *  03. Add a warning for default implementation of
  *      inference resources preparation.
  *  04. Print version info on program startup.
+ *
+ * >>> V0.1.6|2026-07-01, Man Hung-Coeng <udc577@126.com>:
+ *  01. Add initialization for CV backend thread pool for main thread.
+ *  02. Add support for setting nice level and CPU affinity for biz threads.
  */
 
 #ifndef __VERSIONS_H__
@@ -49,7 +53,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       5
+#define PATCH_VER                       6
 #endif
 
 #ifndef __VER__
