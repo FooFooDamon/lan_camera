@@ -56,8 +56,8 @@ extern "C" {
 #define PATCH_VER                       6
 #endif
 
-#ifndef __VER__
-#define __VER__                         "<none>"
+#ifndef __REVISION__
+#define __REVISION__                    "<none>"
 #endif
 
 #ifndef __COMMON_VER__
@@ -74,7 +74,7 @@ extern "C" {
 #endif
 
 #ifndef FULL_VERSION
-#define FULL_VERSION()                  (__VER__[0] ? (PRODUCT_VERSION "_" __VER__) : (PRODUCT_VERSION))
+#define FULL_VERSION()                  (__REVISION__[0] ? (PRODUCT_VERSION "_" __REVISION__) : (PRODUCT_VERSION))
 #endif
 
 #ifdef __cplusplus

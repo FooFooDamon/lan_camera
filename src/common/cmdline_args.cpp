@@ -226,7 +226,7 @@ cmd_args_t parse_cmdline(int argc, char **argv)
             }
             else if (0 == strcmp(long_opt, "vcs-version"))
             {
-                printf("%s|%s|%s\n", __VER__, __COMMON_VER__, get_private_revision());
+                printf("%s|%s|%s\n", __REVISION__, __COMMON_VER__, get_private_revision());
                 exit(EXIT_SUCCESS);
             }
 #ifdef HAS_LOGGER
@@ -362,4 +362,7 @@ void assert_parsed_args(const cmd_args_t &args)
  * >>> 2026-04-13, Man Hung-Coeng <udc577@126.com>:
  *  01. Add support for customizing BIZ_TYPE_CANDIDATES and BIZ_TYPE_DEFAULT
  *      elsewhere.
+ *
+ * >>> 2026-09-15, Man Hung-Coeng <udc577@126.com>:
+ *  01. Update macro __VER__ to __REVISION__.
  */

@@ -10,7 +10,7 @@
 LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 COMMON_DIR := ../common
 
-LAZY_CODING_MAKEFILES ?= $(abspath ${COMMON_DIR}/__ver__.mk c_and_cpp.mk)
+LAZY_CODING_MAKEFILES ?= $(abspath ${COMMON_DIR}/__revision__.mk c_and_cpp.mk)
 
 override PREREQUISITE_FILES := \
     ${LAZY_CODING_URL}/raw/e3c8088f4c13818d5c85818d3c43ad2d10a4f0ed/c_and_cpp/native/camera_v4l2.c \
@@ -105,13 +105,13 @@ versions.h: .revision
 
 .revision: .ALWAYS_MAKE
 	${Q}[ -e $@ ] || touch $@
-	${Q}[ '$(file < $@)' = '${__VER__}|${__COMMON_VER__}' ] || printf '${__VER__}|${__COMMON_VER__}' > $@
+	${Q}[ '$(file < $@)' = '${__REVISION__}|${__COMMON_VER__}' ] || printf '${__REVISION__}|${__COMMON_VER__}' > $@
 
 .ALWAYS_MAKE:
 
 MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
-FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
-DEBUG_DIR ?= ${HOME}/debug/${EXE_FILE}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
+FULL_VER ?= ${MAIN_VER}.${__REVISION__}.${__COMMON_VER__}
+DEBUG_DIR ?= ${HOME}/debug/${EXE_FILE}/${MAIN_VER}/${__REVISION__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
 override REALPATH := realpath -m
 override LS := ls -h -g -o

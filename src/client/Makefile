@@ -11,7 +11,7 @@ LAZY_CODING_URL ?= https://github.com/FooFooDamon/lazy_coding_skills
 COMMON_DIR := ../common
 
 override undefine PREREQUISITE_FILES
-PREREQUISITE_FILES := ${LAZY_CODING_URL}/raw/main/makefiles/__ver__.mk \
+PREREQUISITE_FILES := ${LAZY_CODING_URL}/raw/main/makefiles/__revision__.mk \
     ${LAZY_CODING_URL}/raw/01c4299d4858189ba7072789ff2a6842ecbb44d1/c_and_cpp/qt/qt_print.hpp \
     ${LAZY_CODING_URL}/raw/1967505fc56bce02022d7e896554e5c406c2c57b/c_and_cpp/qt/QPlayerSlider.cpp \
     ${LAZY_CODING_URL}/raw/1967505fc56bce02022d7e896554e5c406c2c57b/c_and_cpp/qt/QPlayerSlider.hpp \
@@ -48,7 +48,7 @@ endif
 
 all: dependencies
 
-include __ver__.mk
+include __revision__.mk
 include QtMakefile
 
 override EXE_DIR := ${HOME}/bin
@@ -56,7 +56,7 @@ override LIB_DIR := ${HOME}/lib
 override CORE_LIB := liblancc_core.so
 override CUST_LIB := $(wildcard ${LIB_DIR}/liblancc_cust.so)
 __COMMON_VER__ ?= $(strip $(shell ${MAKE} -s -C ${COMMON_DIR} revision | grep -i '^Revision:' | awk -F : '{ print $$2 }'))
-DEFINES += -D__VER__='"${__VER__}"' -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
+DEFINES += -D__REVISION__='"${__REVISION__}"' -D__COMMON_VER__='"${__COMMON_VER__}"' -DCOMMPROTO_LITTLE_ENDIAN \
             -DNEED_OS_SIGNALS -DHAS_CONFIG_FILE \
             -DHAS_LOGGER -DUSE_CUSTOM_FMT_LOG -DCUSTOM_FMT_LOG_H='"fmt_log.hpp"' \
             $(if ${FMT_LOG_IMPL_H}, -DFMT_LOG_IMPL_H='"${FMT_LOG_IMPL_H}"') \
@@ -108,13 +108,13 @@ versions.h: .revision
 
 .revision: .ALWAYS_MAKE
 	@[ -e $@ ] || touch $@
-	@[ '$(file < $@)' = '${__VER__}|${__COMMON_VER__}' ] || printf '${__VER__}|${__COMMON_VER__}' > $@
+	@[ '$(file < $@)' = '${__REVISION__}|${__COMMON_VER__}' ] || printf '${__REVISION__}|${__COMMON_VER__}' > $@
 
 .ALWAYS_MAKE:
 
 MAIN_VER ?= $(shell grep "#define [A-Z_]*_VER[[:blank:]]" versions.h | awk '{ print $$3 }' | sed 'N;N; s/\n/./g')
-FULL_VER ?= ${MAIN_VER}.${__VER__}.${__COMMON_VER__}
-DEBUG_DIR ?= ${HOME}/debug/${TARGET}/${MAIN_VER}/${__VER__}.${__COMMON_VER__}
+FULL_VER ?= ${MAIN_VER}.${__REVISION__}.${__COMMON_VER__}
+DEBUG_DIR ?= ${HOME}/debug/${TARGET}/${MAIN_VER}/${__REVISION__}.${__COMMON_VER__}
 override INSTALL := install -D --compare --backup=numbered
 override REALPATH := realpath -m
 override LS := ls -h -g -o
