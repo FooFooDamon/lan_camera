@@ -35,6 +35,9 @@
  *  02. Add support for setting nice level and CPU affinity for biz threads.
  *  03. Fix the bug of Status tab unable to update the uptime of rebooted server
  *      during runtime.
+ *
+ * >>> V0.1.7|2026-09-15, Man Hung-Coeng <udc577@126.com>:
+ *  01. Update the generation logic of program revision number.
  */
 
 #ifndef __VERSIONS_H__
@@ -53,7 +56,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       6
+#define PATCH_VER                       7
 #endif
 
 #ifndef __REVISION__

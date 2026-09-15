@@ -35,6 +35,9 @@
  * >>> V0.1.6|2026-07-01, Man Hung-Coeng <udc577@126.com>:
  *  01. Add initialization for CV backend thread pool for main thread.
  *  02. Add support for setting nice level and CPU affinity for biz threads.
+ *
+ * >>> V0.1.7|2026-09-15, Man Hung-Coeng <udc577@126.com>:
+ *  01. Update the generation logic of program revision number.
  */
 
 #ifndef __VERSIONS_H__
@@ -53,7 +56,7 @@ extern "C" {
 #endif
 
 #ifndef PATCH_VER
-#define PATCH_VER                       6
+#define PATCH_VER                       7
 #endif
 
 #ifndef __REVISION__
