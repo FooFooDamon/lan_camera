@@ -131,6 +131,7 @@ stm32_cube_ide.mk
 stm32_extra.mk
 stm32f1x_extra.mk
 u-boot.mk
+__revision__.mk
 __ver__.mk
 
 
